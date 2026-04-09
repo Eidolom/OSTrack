@@ -227,14 +227,14 @@ class _SignUpStep extends StatelessWidget {
       body: Column(
         children: [
           _AuthOption(
-            label: 'Continue with Google',
+            label: 'Continue with Google (Auth0)',
             icon: Icons.g_mobiledata,
             selected: selectedProvider == AuthProvider.google,
             onTap: () => onSelectProvider(AuthProvider.google),
           ),
           const SizedBox(height: 12),
           _AuthOption(
-            label: 'Continue with Apple',
+            label: 'Continue with Apple (Auth0)',
             icon: Icons.apple,
             selected: selectedProvider == AuthProvider.apple,
             onTap: () => onSelectProvider(AuthProvider.apple),
@@ -258,6 +258,11 @@ class _SignUpStep extends StatelessWidget {
                   )
                 : const Icon(Icons.login),
             label: Text(isLoading ? 'Signing in...' : 'Continue'),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Single auth path: Auth0 Universal Login',
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),

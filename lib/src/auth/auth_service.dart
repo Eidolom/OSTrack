@@ -1,7 +1,8 @@
+import 'package:auth0_flutter/auth0_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+import 'auth0_config.dart';
 
 enum AuthProvider {
   google('Google'),
@@ -15,7 +16,7 @@ enum AuthProvider {
 enum AuthFailureReason {
   cancelled,
   unavailable,
-  invalidCredential,
+  providerNotEnabled,
   configuration,
   unknown,
 }
@@ -49,15 +50,52 @@ class AuthService {
   const AuthService();
 
   Future<AuthSession> signIn(AuthProvider provider) async {
+    final configError = Auth0Config.validate();
+    if (configError != null) {
+      throw AuthFailure(
+        reason: AuthFailureReason.configuration,
+        message: configError,
+      );
+    }
+
+    final auth0 = Auth0(Auth0Config.domain, Auth0Config.clientId);
+    final connection = switch (provider) {
+      AuthProvider.google => 'google-oauth2',
+      AuthProvider.apple => 'apple',
+    };
+
     try {
-      switch (provider) {
-        case AuthProvider.google:
-          return _signInWithGoogle();
-        case AuthProvider.apple:
-          return _signInWithApple();
-      }
+      final credentials = await auth0
+          .webAuthentication(scheme: Auth0Config.callbackScheme)
+          .login(parameters: {'connection': connection});
+
+      final user = credentials.user;
+      return AuthSession(
+        provider: provider,
+        displayName: user.name ?? user.nickname,
+        email: user.email,
+      );
     } on AuthFailure {
       rethrow;
+    } on WebAuthenticationException catch (error) {
+      if (error.isUserCancelledException) {
+        throw const AuthFailure(
+          reason: AuthFailureReason.cancelled,
+          message: 'Sign-in was canceled.',
+        );
+      }
+
+      if (error.code == 'access_denied' || error.code == 'a0.invalid_configuration') {
+        throw const AuthFailure(
+          reason: AuthFailureReason.providerNotEnabled,
+          message: 'Selected provider is not enabled in Auth0. Enable Google/Apple connections in your Auth0 dashboard.',
+        );
+      }
+
+      throw AuthFailure(
+        reason: AuthFailureReason.unknown,
+        message: error.message,
+      );
     } on MissingPluginException {
       if (kDebugMode) {
         return AuthSession(provider: provider, displayName: 'Local Dev User');
@@ -73,57 +111,5 @@ class AuthService {
         message: 'Authentication failed unexpectedly. Please try again.',
       );
     }
-  }
-
-  Future<AuthSession> _signInWithGoogle() async {
-    final googleSignIn = GoogleSignIn(
-      scopes: const ['email'],
-    );
-    final account = await googleSignIn.signIn();
-
-    if (account == null) {
-      throw const AuthFailure(
-        reason: AuthFailureReason.cancelled,
-        message: 'Google sign-in was canceled.',
-      );
-    }
-
-    return AuthSession(
-      provider: AuthProvider.google,
-      displayName: account.displayName,
-      email: account.email,
-    );
-  }
-
-  Future<AuthSession> _signInWithApple() async {
-    final available = await SignInWithApple.isAvailable();
-    if (!available) {
-      throw const AuthFailure(
-        reason: AuthFailureReason.unavailable,
-        message: 'Apple sign-in is not available on this device.',
-      );
-    }
-
-    final credential = await SignInWithApple.getAppleIDCredential(
-      scopes: const [AppleIDAuthorizationScopes.email],
-    );
-
-    if (credential.identityToken == null || credential.identityToken!.isEmpty) {
-      throw const AuthFailure(
-        reason: AuthFailureReason.invalidCredential,
-        message: 'Apple sign-in returned an invalid identity token.',
-      );
-    }
-
-    final displayName = [credential.givenName, credential.familyName]
-        .where((part) => part != null && part!.trim().isNotEmpty)
-        .map((part) => part!.trim())
-        .join(' ');
-
-    return AuthSession(
-      provider: AuthProvider.apple,
-      displayName: displayName.isEmpty ? null : displayName,
-      email: credential.email,
-    );
   }
 }

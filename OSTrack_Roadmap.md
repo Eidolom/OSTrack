@@ -11,7 +11,7 @@
 - [x] Auth and onboarding flow
 - [x] Local preferences persistence (onboarding + platform)
 - [x] Settings screen wired to preferences
-- [x] Google + Apple SDK auth integration in onboarding Step 1
+- [x] Auth0-based Google + Apple login integration in onboarding Step 1
 
 ### Implementation Log
 
@@ -25,6 +25,7 @@
 - 2026-04-09 — Replaced auth stubs with Google Sign-In and Sign in with Apple SDK flows, plus typed auth error handling.
 - 2026-04-09 — Wired native auth platform setup: Android Google Services Gradle plugin, iOS Apple Sign-In entitlements, and Google URL scheme placeholders.
 - 2026-04-09 — Added credential templates and setup checklist (`AUTH_SETUP.md`) for final provider file drop-in.
+- 2026-04-09 — Simplified auth to a single Auth0 Universal Login path and removed Firebase/GoogleService file requirements.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

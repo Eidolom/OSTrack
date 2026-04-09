@@ -1,4 +1,1 @@
 #include "Generated.xcconfig"
-
-// Replace with REVERSED_CLIENT_ID from ios/Runner/GoogleService-Info.plist
-GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.REPLACE_ME
