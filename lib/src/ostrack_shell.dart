@@ -1060,67 +1060,103 @@ class PlayerDashboard extends StatelessWidget {
 
     return OstrackPageFrame(
       eyebrow: 'Player',
-      title: 'Track context at full size',
-      subtitle: 'A dedicated screen for what you are hearing, where it belongs, and how you want to route it.',
+      title: 'Inside the track',
+      subtitle: 'Artwork first, then context. This is where listening becomes memory.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           OstrackCard(
-            padding: const EdgeInsets.all(20),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1E3445), Color(0xFF0F1D29), Color(0xFF0A131C)],
-            ),
-            child: AspectRatio(
-              aspectRatio: 0.92,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      OstrackPill(
-                        label: 'From: ${activeTrack.source}',
-                        icon: Icons.movie_creation_outlined,
-                        color: OstrackColors.gold,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF2B2232), Color(0xFF17161B)],
                       ),
-                      OstrackPill(
-                        label: activeTrack.sceneTag,
-                        icon: Icons.verified_outlined,
-                        color: OstrackColors.teal,
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(activeTrack.title, style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 8),
-                  Text('Composer: ${activeTrack.composer}', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
-                  Text(activeTrack.description, style: Theme.of(context).textTheme.bodyMedium),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('Open in Spotify'),
+                    ),
+                    child: Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: OstrackPill(
+                              label: 'From: ${activeTrack.source}',
+                              icon: Icons.movie_creation_outlined,
+                              color: OstrackColors.gold,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add to Shelf'),
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: OstrackPill(
+                              label: activeTrack.sceneTag,
+                              icon: Icons.verified_outlined,
+                              color: OstrackColors.teal,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        Center(
+                          child: Icon(
+                            Icons.album,
+                            color: OstrackColors.gold.withValues(alpha: 0.8),
+                            size: 96,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Text(activeTrack.title, style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 6),
+                Text(activeTrack.composer, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  decoration: BoxDecoration(
+                    color: OstrackColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: Text(
+                    '"${activeTrack.description}"',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: OstrackColors.textHigh,
+                          height: 1.4,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Open in Spotify'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add to Shelf'),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -1194,7 +1230,7 @@ class _RelatedTrackCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.14),
+                color: accent.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(14),
               ),
                 child: Icon(Icons.graphic_eq, color: accent),
