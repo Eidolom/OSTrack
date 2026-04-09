@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'app_preferences.dart';
 import 'ostrack_catalog.dart';
+import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
 
 class OstrackShell extends StatefulWidget {
-  const OstrackShell({super.key, required this.catalog});
+  const OstrackShell({
+    super.key,
+    required this.catalog,
+    required this.preferences,
+    required this.onPreferencesChanged,
+  });
 
   final OstrackCatalog catalog;
+  final AppPreferences preferences;
+  final PreferencesUpdater onPreferencesChanged;
 
   @override
   State<OstrackShell> createState() => _OstrackShellState();
@@ -28,8 +37,15 @@ class _OstrackShellState extends State<OstrackShell> {
               HomeDashboard(catalog: widget.catalog),
               ExploreDashboard(catalog: widget.catalog),
               LibraryDashboard(catalog: widget.catalog),
-              PlayerDashboard(catalog: widget.catalog),
-              ProfileDashboard(catalog: widget.catalog),
+              PlayerDashboard(
+                catalog: widget.catalog,
+                selectedPlatform: widget.preferences.selectedPlatform,
+              ),
+              ProfileDashboard(
+                catalog: widget.catalog,
+                preferences: widget.preferences,
+                onPreferencesChanged: widget.onPreferencesChanged,
+              ),
             ],
           ),
         ],
@@ -230,11 +246,13 @@ class OstrackPill extends StatelessWidget {
     required this.label,
     this.icon,
     this.color,
+    this.isActive = false,
   });
 
   final String label;
   final IconData? icon;
   final Color? color;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
@@ -242,9 +260,9 @@ class OstrackPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.14),
+        color: accent.withOpacity(isActive ? 0.3 : 0.14),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withOpacity(0.45)),
+        border: Border.all(color: accent.withOpacity(isActive ? 0.85 : 0.45)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -753,9 +771,14 @@ class _ShelfCard extends StatelessWidget {
 }
 
 class PlayerDashboard extends StatelessWidget {
-  const PlayerDashboard({super.key, required this.catalog});
+  const PlayerDashboard({
+    super.key,
+    required this.catalog,
+    required this.selectedPlatform,
+  });
 
   final OstrackCatalog catalog;
+  final String selectedPlatform;
 
   @override
   Widget build(BuildContext context) {
@@ -832,13 +855,28 @@ class PlayerDashboard extends StatelessWidget {
             title: 'Platform selector',
             subtitle: 'Route the track to the user\'s connected service when playback is external.',
           ),
-          const Wrap(
+          Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
-              OstrackPill(label: 'Spotify', icon: Icons.circle, color: OstrackColors.teal),
-              OstrackPill(label: 'Apple Music', icon: Icons.music_note, color: OstrackColors.gold),
-              OstrackPill(label: 'YouTube Music', icon: Icons.play_circle_outline, color: OstrackColors.coral),
+              OstrackPill(
+                label: 'Spotify',
+                icon: Icons.circle,
+                color: OstrackColors.teal,
+                isActive: selectedPlatform == 'Spotify',
+              ),
+              OstrackPill(
+                label: 'Apple Music',
+                icon: Icons.music_note,
+                color: OstrackColors.gold,
+                isActive: selectedPlatform == 'Apple Music',
+              ),
+              OstrackPill(
+                label: 'YouTube Music',
+                icon: Icons.play_circle_outline,
+                color: OstrackColors.coral,
+                isActive: selectedPlatform == 'YouTube Music',
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -900,9 +938,16 @@ class _RelatedTrackCard extends StatelessWidget {
 }
 
 class ProfileDashboard extends StatelessWidget {
-  const ProfileDashboard({super.key, required this.catalog});
+  const ProfileDashboard({
+    super.key,
+    required this.catalog,
+    required this.preferences,
+    required this.onPreferencesChanged,
+  });
 
   final OstrackCatalog catalog;
+  final AppPreferences preferences;
+  final PreferencesUpdater onPreferencesChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -915,6 +960,24 @@ class ProfileDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SettingsScreen(
+                      preferences: preferences,
+                      onPreferencesChanged: onPreferencesChanged,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.settings_outlined),
+              label: const Text('Open Settings'),
+            ),
+          ),
+          const SizedBox(height: 16),
           OstrackCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

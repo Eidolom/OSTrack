@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../app_preferences.dart';
+import '../auth/auth_service.dart';
 import '../ostrack_catalog.dart';
 import '../ostrack_shell.dart';
 import '../ostrack_theme.dart';
 
 class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({super.key, required this.catalog});
+  const OnboardingFlow({
+    super.key,
+    required this.catalog,
+    required this.initialPreferences,
+    required this.authService,
+    required this.onComplete,
+  });
 
   final OstrackCatalog catalog;
+  final AppPreferences initialPreferences;
+  final AuthService authService;
+  final ValueChanged<AppPreferences> onComplete;
 
   @override
   State<OnboardingFlow> createState() => _OnboardingFlowState();
@@ -15,15 +26,19 @@ class OnboardingFlow extends StatefulWidget {
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
   int _step = 0;
-  final Set<String> _selectedWorlds = {
-    'Video Games',
-    'Anime',
-    'Movies & TV',
-    'K-Drama',
-    'Composers',
-  };
-  String _selectedPlatform = 'Spotify';
-  final Set<String> _followedUsers = {'yukirose', 'ostnerdd', 'melodyarchive'};
+  late final Set<String> _selectedWorlds;
+  late String _selectedPlatform;
+  late final Set<String> _followedUsers;
+  AuthProvider _selectedAuthProvider = AuthProvider.google;
+  bool _isAuthenticating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedWorlds = widget.initialPreferences.selectedWorlds.toSet();
+    _selectedPlatform = widget.initialPreferences.selectedPlatform;
+    _followedUsers = widget.initialPreferences.followedUsers.toSet();
+  }
 
   void _nextStep() {
     if (_step < 4) {
@@ -33,17 +48,46 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return;
     }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => OstrackShell(catalog: widget.catalog),
+    widget.onComplete(
+      widget.initialPreferences.copyWith(
+        onboardingCompleted: true,
+        selectedPlatform: _selectedPlatform,
+        selectedWorlds: _selectedWorlds.toList(),
+        followedUsers: _followedUsers.toList(),
       ),
     );
+  }
+
+  Future<void> _handleSignInContinue() async {
+    setState(() {
+      _isAuthenticating = true;
+    });
+
+    await widget.authService.signIn(_selectedAuthProvider);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isAuthenticating = false;
+    });
+
+    _nextStep();
   }
 
   @override
   Widget build(BuildContext context) {
     final pages = [
-      _SignUpStep(onContinue: _nextStep),
+      _SignUpStep(
+        selectedProvider: _selectedAuthProvider,
+        isLoading: _isAuthenticating,
+        onSelectProvider: (provider) {
+          setState(() {
+            _selectedAuthProvider = provider;
+          });
+        },
+        onContinue: _handleSignInContinue,
+      ),
       _WorldSelectionStep(
         catalog: widget.catalog,
         selectedWorlds: _selectedWorlds,
@@ -70,6 +114,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _FollowStep(
         catalog: widget.catalog,
         followedUsers: _followedUsers,
+        onToggleFollow: (name) {
+          setState(() {
+            if (_followedUsers.contains(name)) {
+              _followedUsers.remove(name);
+            } else {
+              _followedUsers.add(name);
+            }
+          });
+        },
         onContinue: _nextStep,
       ),
       _HomePreviewStep(
@@ -126,9 +179,17 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 }
 
 class _SignUpStep extends StatelessWidget {
-  const _SignUpStep({required this.onContinue});
+  const _SignUpStep({
+    required this.selectedProvider,
+    required this.isLoading,
+    required this.onSelectProvider,
+    required this.onContinue,
+  });
 
-  final VoidCallback onContinue;
+  final AuthProvider selectedProvider;
+  final bool isLoading;
+  final ValueChanged<AuthProvider> onSelectProvider;
+  final Future<void> Function() onContinue;
 
   @override
   Widget build(BuildContext context) {
@@ -138,15 +199,36 @@ class _SignUpStep extends StatelessWidget {
       subtitle: 'Choose a sign-in path. We keep the onboarding short and move straight into the worlds you care about.',
       body: Column(
         children: [
-          const _AuthOption(label: 'Continue with Google', icon: Icons.g_mobiledata),
+          _AuthOption(
+            label: 'Continue with Google',
+            icon: Icons.g_mobiledata,
+            selected: selectedProvider == AuthProvider.google,
+            onTap: () => onSelectProvider(AuthProvider.google),
+          ),
           const SizedBox(height: 12),
-          const _AuthOption(label: 'Continue with Apple', icon: Icons.apple),
+          _AuthOption(
+            label: 'Continue with Apple',
+            icon: Icons.apple,
+            selected: selectedProvider == AuthProvider.apple,
+            onTap: () => onSelectProvider(AuthProvider.apple),
+          ),
           const SizedBox(height: 12),
-          const _AuthOption(label: 'Use email instead', icon: Icons.mail_outline),
+          _AuthOption(
+            label: 'Use email instead',
+            icon: Icons.mail_outline,
+            selected: selectedProvider == AuthProvider.email,
+            onTap: () => onSelectProvider(AuthProvider.email),
+          ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: onContinue,
-            child: const Text('Continue'),
+          FilledButton.icon(
+            onPressed: isLoading ? null : onContinue,
+            icon: isLoading
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.login),
+            label: Text(isLoading ? 'Signing in...' : 'Continue'),
           ),
         ],
       ),
@@ -255,11 +337,13 @@ class _FollowStep extends StatelessWidget {
   const _FollowStep({
     required this.catalog,
     required this.followedUsers,
+    required this.onToggleFollow,
     required this.onContinue,
   });
 
   final OstrackCatalog catalog;
   final Set<String> followedUsers;
+  final ValueChanged<String> onToggleFollow;
   final VoidCallback onContinue;
 
   @override
@@ -277,6 +361,7 @@ class _FollowStep extends StatelessWidget {
               name: suggestion.title,
               bio: suggestion.subtitle,
               followed: followedUsers.contains(suggestion.title),
+              onTap: () => onToggleFollow(suggestion.title),
             ),
             if (suggestion != suggestions.last) const SizedBox(height: 12),
           ],
@@ -377,21 +462,48 @@ class _OnboardingStepFrame extends StatelessWidget {
 }
 
 class _AuthOption extends StatelessWidget {
-  const _AuthOption({required this.label, required this.icon});
+  const _AuthOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return OstrackCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      child: Row(
-        children: [
-          Icon(icon, color: OstrackColors.gold),
-          const SizedBox(width: 14),
-          Text(label, style: Theme.of(context).textTheme.titleMedium),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: OstrackCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        gradient: selected
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  OstrackColors.teal.withOpacity(0.24),
+                  OstrackColors.surface.withOpacity(0.95),
+                ],
+              )
+            : null,
+        child: Row(
+          children: [
+            Icon(icon, color: selected ? OstrackColors.teal : OstrackColors.gold),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+            ),
+            Icon(
+              selected ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: selected ? OstrackColors.teal : OstrackColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -402,39 +514,45 @@ class _SuggestionTile extends StatelessWidget {
     required this.name,
     required this.bio,
     required this.followed,
+    required this.onTap,
   });
 
   final String name;
   final String bio;
   final bool followed;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return OstrackCard(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 22,
-            backgroundColor: OstrackColors.teal,
-            child: Icon(Icons.person, color: Colors.black),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(bio, style: Theme.of(context).textTheme.bodyMedium),
-              ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: OstrackCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const CircleAvatar(
+              radius: 22,
+              backgroundColor: OstrackColors.teal,
+              child: Icon(Icons.person, color: Colors.black),
             ),
-          ),
-          Icon(
-            followed ? Icons.check_circle : Icons.add_circle_outline,
-            color: followed ? OstrackColors.teal : OstrackColors.textMuted,
-          ),
-        ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(bio, style: Theme.of(context).textTheme.bodyMedium),
+                ],
+              ),
+            ),
+            Icon(
+              followed ? Icons.check_circle : Icons.add_circle_outline,
+              color: followed ? OstrackColors.teal : OstrackColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
