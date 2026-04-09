@@ -2,22 +2,31 @@
 
 Auth is intentionally simplified to a single provider layer: Auth0 Universal Login.
 
-## 1. Fill Auth0 app config in code
+## 1. Provide Auth0 config via dart-define
 
-Open [lib/src/auth/auth0_config.dart](lib/src/auth/auth0_config.dart) and set:
+`auth0_config.dart` now reads values from compile-time defines.
 
-- `domain`
-- `clientId`
-- `callbackScheme`
+Use:
 
-Use a lowercase callback scheme (example: `com.ostrack.ostrackapp`).
+- `OSTRACK_AUTH0_DOMAIN`
+- `OSTRACK_AUTH0_CLIENT_ID`
+
+Example run command:
+
+`flutter run --dart-define=OSTRACK_AUTH0_DOMAIN=your-tenant.eu.auth0.com --dart-define=OSTRACK_AUTH0_CLIENT_ID=yourClientId`
+
+Callback scheme remains in code and should stay lowercase (example: `com.ostrack.ostrackapp`).
 
 ## 2. Match Android callback placeholders
 
 Open [android/app/build.gradle.kts](android/app/build.gradle.kts) and make sure:
 
-- `manifestPlaceholders["auth0Domain"]` equals your Auth0 domain
+- `manifestPlaceholders["auth0Domain"]` comes from Gradle property `auth0Domain`
 - `manifestPlaceholders["auth0Scheme"]` equals the same `callbackScheme` used in `auth0_config.dart`
+
+Set local Android domain in `android/local.properties` (not committed):
+
+`auth0Domain=your-tenant.eu.auth0.com`
 
 ## 3. Match iOS URL scheme
 

@@ -32,7 +32,7 @@ Unique constraint:
 - track_id (uuid, fk -> tracks.id)
 - name (text, not null)
 - lang (text, not null)
-- source (enum: spotify, apple_music, vgmdb, user_submitted, internal)
+- source (enum: spotify, apple_music, musicbrainz, user_submitted, internal)
 - verified (bool, default false)
 
 ### track_platform_ids

@@ -6,6 +6,8 @@ plugins {
 }
 
 android {
+    val auth0Domain = (project.findProperty("auth0Domain") as String?) ?: "REPLACE_ME.us.auth0.com"
+
     namespace = "com.ostrack.ostrack_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -28,7 +30,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["auth0Domain"] = "dev-58tp0mtjukekxfr5.eu.auth0.com"
+        manifestPlaceholders["auth0Domain"] = auth0Domain
         manifestPlaceholders["auth0Scheme"] = "com.ostrack.ostrackapp"
     }
 

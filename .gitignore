@@ -45,3 +45,5 @@ app.*.map.json
 /android/app/release
 
 # Auth provider credentials (keep *.example templates committed)
+/android/local.properties
+/lib/src/auth/auth0_config.local.dart
