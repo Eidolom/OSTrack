@@ -4,16 +4,18 @@
 ## Current Build Status
 
 - Phase: 0 — Foundation
-- Focus: Flutter scaffold and navigation shell
+- Focus: Flutter scaffold, seed catalog, onboarding flow
 - [x] Project scaffold created
 - [x] Starter counter app replaced
-- [ ] Data model and persistence layer
-- [ ] Auth and onboarding flow
+- [x] Data model and seed catalog
+- [x] Auth and onboarding flow
 
 ### Implementation Log
 
 - 2026-04-09 — Created the Flutter project scaffold in the existing workspace.
 - 2026-04-09 — Replaced the starter app with a branded 5-tab OSTrack shell and page placeholders.
+- 2026-04-09 — Added a structured seed catalog and wired the shell to read from it.
+- 2026-04-09 — Added a multi-step onboarding flow that hands off into the main shell.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

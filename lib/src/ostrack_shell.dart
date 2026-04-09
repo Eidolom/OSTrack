@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'ostrack_catalog.dart';
 import 'ostrack_theme.dart';
 
 class OstrackShell extends StatefulWidget {
-  const OstrackShell({super.key});
+  const OstrackShell({super.key, required this.catalog});
+
+  final OstrackCatalog catalog;
 
   @override
   State<OstrackShell> createState() => _OstrackShellState();
@@ -21,12 +24,12 @@ class _OstrackShellState extends State<OstrackShell> {
           const OstrackBackdrop(),
           IndexedStack(
             index: _currentIndex,
-            children: const [
-              HomeDashboard(),
-              ExploreDashboard(),
-              LibraryDashboard(),
-              PlayerDashboard(),
-              ProfileDashboard(),
+            children: [
+              HomeDashboard(catalog: widget.catalog),
+              ExploreDashboard(catalog: widget.catalog),
+              LibraryDashboard(catalog: widget.catalog),
+              PlayerDashboard(catalog: widget.catalog),
+              ProfileDashboard(catalog: widget.catalog),
             ],
           ),
         ],
@@ -289,10 +292,15 @@ class SectionHeader extends StatelessWidget {
 }
 
 class HomeDashboard extends StatelessWidget {
-  const HomeDashboard({super.key});
+  const HomeDashboard({super.key, required this.catalog});
+
+  final OstrackCatalog catalog;
 
   @override
   Widget build(BuildContext context) {
+    final feed = catalog.homeFeed;
+    final recommendations = catalog.recommendations;
+
     return OstrackPageFrame(
       eyebrow: 'Home',
       title: 'Your soundtrack pulse',
@@ -318,11 +326,11 @@ class HomeDashboard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
-                const Row(
+                Row(
                   children: [
-                    _MiniMetric(label: 'Top track', value: 'The First Hunter'),
-                    SizedBox(width: 12),
-                    _MiniMetric(label: 'Activity', value: '214 posts'),
+                    const _MiniMetric(label: 'Top track', value: 'The First Hunter'),
+                    const SizedBox(width: 12),
+                    const _MiniMetric(label: 'Activity', value: '214 posts'),
                   ],
                 ),
               ],
@@ -333,23 +341,15 @@ class HomeDashboard extends StatelessWidget {
             title: 'Today on OSTrack',
             subtitle: 'Recent shelf activity, reviews, and timeline tags from people you follow.',
           ),
-          const _FeedCard(
-            icon: Icons.playlist_add_check,
-            title: '@yukirose added One-Winged Angel to Tracks That Changed Me',
-            subtitle: 'Shelf activity · 4 minutes ago',
-          ),
-          const SizedBox(height: 12),
-          const _FeedCard(
-            icon: Icons.rate_review_outlined,
-            title: '@ostnerdd reviewed the NieR:Automata OST ★★★★★',
-            subtitle: 'New review · 18 minutes ago',
-          ),
-          const SizedBox(height: 12),
-          const _FeedCard(
-            icon: Icons.flag_outlined,
-            title: '@melodyarchive tagged a moment in Shadow of the Colossus',
-            subtitle: 'Scene timeline · 41 minutes ago',
-          ),
+          for (final item in feed) ...[
+            _FeedCard(
+              icon: item.icon,
+              title: item.title,
+              subtitle: item.subtitle,
+              accent: item.accent,
+            ),
+            if (item != feed.last) const SizedBox(height: 12),
+          ],
           const SizedBox(height: 24),
           const SectionHeader(
             title: 'Recommended for you',
@@ -358,11 +358,15 @@ class HomeDashboard extends StatelessWidget {
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: const [
-              _RecommendationCard(title: 'Final Fantasy VII', subtitle: 'Composer heat: high', accent: OstrackColors.gold),
-              _RecommendationCard(title: 'Cowboy Bebop', subtitle: 'Shelf match: 94%', accent: OstrackColors.teal),
-              _RecommendationCard(title: 'NieR:Automata', subtitle: 'Scene tags pending', accent: OstrackColors.coral),
-            ],
+            children: recommendations
+                .map(
+                  (item) => _RecommendationCard(
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    accent: item.accent,
+                  ),
+                )
+                .toList(),
           ),
         ],
       ),
@@ -404,11 +408,13 @@ class _FeedCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.accent,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -421,10 +427,10 @@ class _FeedCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: OstrackColors.teal.withOpacity(0.14),
+              color: accent.withOpacity(0.14),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: OstrackColors.teal),
+            child: Icon(icon, color: accent),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -489,10 +495,15 @@ class _RecommendationCard extends StatelessWidget {
 }
 
 class ExploreDashboard extends StatelessWidget {
-  const ExploreDashboard({super.key});
+  const ExploreDashboard({super.key, required this.catalog});
+
+  final OstrackCatalog catalog;
 
   @override
   Widget build(BuildContext context) {
+    final categories = catalog.categories;
+    final trends = catalog.trends;
+
     return OstrackPageFrame(
       eyebrow: 'Explore',
       title: 'Browse worlds, not just songs',
@@ -503,25 +514,21 @@ class ExploreDashboard extends StatelessWidget {
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: const [
-              _CategoryTile(label: 'Video Games', accent: OstrackColors.gold),
-              _CategoryTile(label: 'Anime', accent: OstrackColors.teal),
-              _CategoryTile(label: 'Movies & TV', accent: OstrackColors.coral),
-              _CategoryTile(label: 'K-Drama', accent: Color(0xFF9B8CFF)),
-              _CategoryTile(label: 'Composers', accent: Color(0xFF7CC8FF)),
-              _CategoryTile(label: 'Originals', accent: Color(0xFFFFA94D)),
-            ],
+            children: categories
+                .map(
+                  (item) => _CategoryTile(label: item.label, accent: item.accent),
+                )
+                .toList(),
           ),
           const SizedBox(height: 24),
           const SectionHeader(
             title: 'Trending this week',
             subtitle: 'High activity, high intent, and the soundtrack pages people are opening most.',
           ),
-          const _TrendRow(label: 'Elden Ring', meta: '285 tracks · 9k activities'),
-          const SizedBox(height: 12),
-          const _TrendRow(label: 'Cowboy Bebop', meta: '78 tracks · 6k activities'),
-          const SizedBox(height: 12),
-          const _TrendRow(label: 'Dune', meta: '41 tracks · 4k activities'),
+          for (final item in trends) ...[
+            _TrendRow(label: item.label, meta: item.meta, accent: item.accent),
+            if (item != trends.last) const SizedBox(height: 12),
+          ],
         ],
       ),
     );
@@ -567,10 +574,11 @@ class _CategoryTile extends StatelessWidget {
 }
 
 class _TrendRow extends StatelessWidget {
-  const _TrendRow({required this.label, required this.meta});
+  const _TrendRow({required this.label, required this.meta, required this.accent});
 
   final String label;
   final String meta;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -582,10 +590,10 @@ class _TrendRow extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: OstrackColors.gold.withOpacity(0.14),
+              color: accent.withOpacity(0.14),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.whatshot, color: OstrackColors.gold),
+            child: Icon(Icons.whatshot, color: accent),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -606,11 +614,16 @@ class _TrendRow extends StatelessWidget {
 }
 
 class LibraryDashboard extends StatelessWidget {
-  const LibraryDashboard({super.key});
+  const LibraryDashboard({super.key, required this.catalog});
+
+  final OstrackCatalog catalog;
 
   @override
   Widget build(BuildContext context) {
     final tabHeight = MediaQuery.of(context).size.height * 0.64;
+    final shelves = catalog.shelves;
+    final ratings = catalog.ratings;
+    final history = catalog.history;
 
     return OstrackPageFrame(
       eyebrow: 'Library',
@@ -639,30 +652,33 @@ class LibraryDashboard extends StatelessWidget {
                   _LibraryTab(
                     title: 'Shelves',
                     child: Column(
-                      children: const [
-                        _ShelfCard(title: 'Tracks That Changed Me', meta: 'Public · 52 tracks · 184 followers'),
-                        SizedBox(height: 12),
-                        _ShelfCard(title: 'Crying in the car playlist', meta: 'Private · 19 tracks · 0 followers'),
+                      children: [
+                        for (final item in shelves) ...[
+                          _ShelfCard(title: item.title, meta: item.meta, accent: item.accent),
+                          if (item != shelves.last) const SizedBox(height: 12),
+                        ],
                       ],
                     ),
                   ),
                   _LibraryTab(
                     title: 'Ratings',
                     child: Column(
-                      children: const [
-                        _ShelfCard(title: 'NieR:Automata OST', meta: 'Average: 4.9 · Rated 32 tracks'),
-                        SizedBox(height: 12),
-                        _ShelfCard(title: 'Final Fantasy VII', meta: 'Average: 4.8 · Rated 18 tracks'),
+                      children: [
+                        for (final item in ratings) ...[
+                          _ShelfCard(title: item.title, meta: item.meta, accent: item.accent),
+                          if (item != ratings.last) const SizedBox(height: 12),
+                        ],
                       ],
                     ),
                   ),
                   _LibraryTab(
                     title: 'History',
                     child: Column(
-                      children: const [
-                        _ShelfCard(title: 'Margit, the Fell Omen', meta: 'Played 14 minutes ago'),
-                        SizedBox(height: 12),
-                        _ShelfCard(title: 'The Day I Became the Wind', meta: 'Played 1 hour ago'),
+                      children: [
+                        for (final item in history) ...[
+                          _ShelfCard(title: item.title, meta: item.meta, accent: item.accent),
+                          if (item != history.last) const SizedBox(height: 12),
+                        ],
                       ],
                     ),
                   ),
@@ -698,10 +714,11 @@ class _LibraryTab extends StatelessWidget {
 }
 
 class _ShelfCard extends StatelessWidget {
-  const _ShelfCard({required this.title, required this.meta});
+  const _ShelfCard({required this.title, required this.meta, required this.accent});
 
   final String title;
   final String meta;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -713,10 +730,10 @@ class _ShelfCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: OstrackColors.teal.withOpacity(0.12),
+              color: accent.withOpacity(0.12),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.collections_bookmark_outlined, color: OstrackColors.teal),
+            child: Icon(Icons.collections_bookmark_outlined, color: accent),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -736,10 +753,15 @@ class _ShelfCard extends StatelessWidget {
 }
 
 class PlayerDashboard extends StatelessWidget {
-  const PlayerDashboard({super.key});
+  const PlayerDashboard({super.key, required this.catalog});
+
+  final OstrackCatalog catalog;
 
   @override
   Widget build(BuildContext context) {
+    final activeTrack = catalog.activeTrack;
+    final relatedTracks = catalog.relatedTracks;
+
     return OstrackPageFrame(
       eyebrow: 'Player',
       title: 'Track context at full size',
@@ -762,20 +784,25 @@ class PlayerDashboard extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      OstrackPill(label: 'From: Hollow Knight', icon: Icons.movie_creation_outlined, color: OstrackColors.gold),
-                      OstrackPill(label: 'Verified scene tag', icon: Icons.verified_outlined, color: OstrackColors.teal),
+                    children: [
+                      OstrackPill(
+                        label: 'From: ${activeTrack.source}',
+                        icon: Icons.movie_creation_outlined,
+                        color: OstrackColors.gold,
+                      ),
+                      OstrackPill(
+                        label: activeTrack.sceneTag,
+                        icon: Icons.verified_outlined,
+                        color: OstrackColors.teal,
+                      ),
                     ],
                   ),
                   const Spacer(),
-                  Text('City of Tears', style: Theme.of(context).textTheme.headlineMedium),
+                  Text(activeTrack.title, style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 8),
-                  Text('Composer: Christopher Larkin', style: Theme.of(context).textTheme.titleMedium),
+                  Text('Composer: ${activeTrack.composer}', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 12),
-                  Text(
-                    'Plays during the rain-soaked descent into Hallownest. Community tags call it the emotional hinge of the route.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  Text(activeTrack.description, style: Theme.of(context).textTheme.bodyMedium),
                   const Spacer(),
                   Row(
                     children: [
@@ -822,12 +849,11 @@ class PlayerDashboard extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: const [
-                _RelatedTrackCard(title: 'Greenpath', subtitle: 'Hollow Knight'),
-                SizedBox(width: 12),
-                _RelatedTrackCard(title: 'Mantis Lords', subtitle: 'Hollow Knight'),
-                SizedBox(width: 12),
-                _RelatedTrackCard(title: 'Radiance', subtitle: 'Hollow Knight'),
+              children: [
+                for (final item in relatedTracks) ...[
+                  _RelatedTrackCard(title: item.title, subtitle: item.subtitle, accent: item.accent),
+                  if (item != relatedTracks.last) const SizedBox(width: 12),
+                ],
               ],
             ),
           ),
@@ -838,10 +864,11 @@ class PlayerDashboard extends StatelessWidget {
 }
 
 class _RelatedTrackCard extends StatelessWidget {
-  const _RelatedTrackCard({required this.title, required this.subtitle});
+  const _RelatedTrackCard({required this.title, required this.subtitle, required this.accent});
 
   final String title;
   final String subtitle;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -856,10 +883,10 @@ class _RelatedTrackCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: OstrackColors.coral.withOpacity(0.14),
+                color: accent.withOpacity(0.14),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(Icons.graphic_eq, color: OstrackColors.coral),
+                child: Icon(Icons.graphic_eq, color: accent),
             ),
             const SizedBox(height: 14),
             Text(title, style: Theme.of(context).textTheme.titleMedium),
@@ -873,10 +900,14 @@ class _RelatedTrackCard extends StatelessWidget {
 }
 
 class ProfileDashboard extends StatelessWidget {
-  const ProfileDashboard({super.key});
+  const ProfileDashboard({super.key, required this.catalog});
+
+  final OstrackCatalog catalog;
 
   @override
   Widget build(BuildContext context) {
+    final profile = catalog.profile;
+
     return OstrackPageFrame(
       eyebrow: 'Profile',
       title: 'Taste as identity',
@@ -888,7 +919,7 @@ class ProfileDashboard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
                     CircleAvatar(
                       radius: 28,
@@ -900,9 +931,9 @@ class ProfileDashboard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('melodyarchive'),
+                          Text(profile.username),
                           SizedBox(height: 4),
-                          Text('Collector of sad boss themes and immaculate scene tags.'),
+                          Text(profile.bio),
                         ],
                       ),
                     ),
@@ -910,10 +941,20 @@ class ProfileDashboard extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 Row(
-                  children: const [
-                    Expanded(child: _ProfileStat(label: 'Ratings', value: '1,284')),
-                    SizedBox(width: 12),
-                    Expanded(child: _ProfileStat(label: 'Top composer', value: 'Yoko Shimomura')),
+                  children: [
+                    Expanded(
+                      child: _ProfileStat(
+                        label: 'Ratings',
+                        value: profile.ratings.toString(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ProfileStat(
+                        label: 'Top composer',
+                        value: profile.topComposer,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -932,16 +973,18 @@ class ProfileDashboard extends StatelessWidget {
             title: 'Recent activity',
             subtitle: 'A light-weight log of what you have been adding and rating.',
           ),
-          const _FeedCard(
+          _FeedCard(
             icon: Icons.star_outline,
             title: 'Rated The Last of Us Main Theme five stars',
             subtitle: '1 hour ago',
+            accent: OstrackColors.gold,
           ),
           const SizedBox(height: 12),
-          const _FeedCard(
+          _FeedCard(
             icon: Icons.collections_bookmark_outlined,
             title: 'Created a shelf called Crying in the car playlist',
             subtitle: 'Today',
+            accent: OstrackColors.teal,
           ),
         ],
       ),
