@@ -52,6 +52,7 @@
 - 2026-04-09 — UI/UX Step 2 Home pass completed: redesigned On This Day as a featured editorial card and refactored feed activity cards with avatar-led social hierarchy and clearer activity metadata.
 - 2026-04-09 — UI/UX Step 3 Explore pass completed: redesigned category tiles into destination-style art blocks with count labels and replaced trending rows with a horizontal artwork rail.
 - 2026-04-09 — UI/UX Step 4 Library pass completed: redesigned Shelves into a visual grid (with create-shelf tile), added Ratings summary/list treatment, and converted History into timeline-style listening entries.
+- 2026-04-09 — UI/UX Step 5 Profile pass completed: added collector identity hero, dedicated collector stats sheet, and horizontal shelf showcase tiles with richer visual treatment.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

@@ -1251,59 +1251,38 @@ class ProfileDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          OstrackCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: OstrackColors.teal,
-                      child: Icon(Icons.person, color: Colors.black),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(profile.username),
-                          SizedBox(height: 4),
-                          Text(profile.bio),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ProfileStat(
-                        label: 'Ratings',
-                        value: profile.ratings.toString(),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ProfileStat(
-                        label: 'Top composer',
-                        value: profile.topComposer,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _CollectorHeroCard(profile: profile),
+          const SizedBox(height: 16),
+          _CollectorStatsSheet(profile: profile),
           const SizedBox(height: 24),
           const SectionHeader(
             title: 'Public shelves',
             subtitle: 'Your curated shelves are the social currency of the platform.',
           ),
-          const _ShelfShowcase(title: 'Tracks that make me feel like I can survive anything', meta: '12 followers'),
-          const SizedBox(height: 12),
-          const _ShelfShowcase(title: 'Rainy day scores', meta: '48 followers'),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: const [
+                _ShelfShowcaseTile(
+                  title: 'Tracks that make me feel like I can survive anything',
+                  meta: '12 followers',
+                  accent: OstrackColors.teal,
+                ),
+                SizedBox(width: 12),
+                _ShelfShowcaseTile(
+                  title: 'Rainy day scores',
+                  meta: '48 followers',
+                  accent: OstrackColors.gold,
+                ),
+                SizedBox(width: 12),
+                _ShelfShowcaseTile(
+                  title: 'Boss fight catharsis',
+                  meta: '81 followers',
+                  accent: OstrackColors.coral,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
           const SectionHeader(
             title: 'Recent activity',
@@ -1328,65 +1307,191 @@ class ProfileDashboard extends StatelessWidget {
   }
 }
 
-class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({required this.label, required this.value});
+class _CollectorHeroCard extends StatelessWidget {
+  const _CollectorHeroCard({required this.profile});
 
-  final String label;
-  final String value;
+  final ProfileEntry profile;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-      ),
+    return OstrackCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 6),
-          Text(value, style: Theme.of(context).textTheme.titleMedium),
+          Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: OstrackColors.gold, width: 2),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      OstrackColors.gold.withValues(alpha: 0.28),
+                      OstrackColors.teal.withValues(alpha: 0.24),
+                    ],
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  profile.username.substring(0, 1).toUpperCase(),
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(profile.username, style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ProfileBadge(label: 'Lorekeeper', color: OstrackColors.gold),
+                        _ProfileBadge(label: 'Founding Archivist', color: OstrackColors.teal),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '"${profile.bio}"',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '${profile.ratings} ratings · 14 shelves · 389 followers',
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
         ],
       ),
     );
   }
 }
 
-class _ShelfShowcase extends StatelessWidget {
-  const _ShelfShowcase({required this.title, required this.meta});
+class _ProfileBadge extends StatelessWidget {
+  const _ProfileBadge({required this.label, required this.color});
 
-  final String title;
-  final String meta;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: color.withValues(alpha: 0.16),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color),
+      ),
+    );
+  }
+}
+
+class _CollectorStatsSheet extends StatelessWidget {
+  const _CollectorStatsSheet({required this.profile});
+
+  final ProfileEntry profile;
 
   @override
   Widget build(BuildContext context) {
     return OstrackCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: OstrackColors.gold.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(Icons.book_outlined, color: OstrackColors.gold),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(meta, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
+          Text('COLLECTOR STATS', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 12),
+          _CollectorStatRow(label: 'Total tracks rated', value: profile.ratings.toString()),
+          const SizedBox(height: 8),
+          const _CollectorStatRow(label: 'Scene tags submitted', value: '47'),
+          const SizedBox(height: 8),
+          const _CollectorStatRow(label: 'Bounties resolved', value: '12'),
+          const SizedBox(height: 8),
+          const _CollectorStatRow(label: 'Streak', value: '14 weeks'),
+          const SizedBox(height: 8),
+          _CollectorStatRow(label: 'Top composer', value: profile.topComposer),
+          const SizedBox(height: 14),
+          Text(
+            'ARCHIVIST TIER II',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: OstrackColors.gold),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CollectorStatRow extends StatelessWidget {
+  const _CollectorStatRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ],
+    );
+  }
+}
+
+class _ShelfShowcaseTile extends StatelessWidget {
+  const _ShelfShowcaseTile({required this.title, required this.meta, required this.accent});
+
+  final String title;
+  final String meta;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      child: OstrackCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 3 / 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [accent.withValues(alpha: 0.42), accent.withValues(alpha: 0.14)],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(Icons.library_music, color: accent.withValues(alpha: 0.95), size: 38),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(meta, style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        ),
       ),
     );
   }
