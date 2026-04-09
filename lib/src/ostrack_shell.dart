@@ -182,14 +182,17 @@ class HomeDashboard extends StatelessWidget {
             title: 'Today on OSTrack',
             subtitle: 'What people in your circle are rating, tagging, and shelving right now.',
           ),
-          for (final item in feed) ...[
-            _FeedCard(
-              icon: item.icon,
-              title: item.title,
-              subtitle: item.subtitle,
-              accent: item.accent,
+          for (var i = 0; i < feed.length; i++) ...[
+            _StaggeredReveal(
+              index: i,
+              child: _FeedCard(
+                icon: feed[i].icon,
+                title: feed[i].title,
+                subtitle: feed[i].subtitle,
+                accent: feed[i].accent,
+              ),
             ),
-            if (item != feed.last) const SizedBox(height: 16),
+            if (i < feed.length - 1) const SizedBox(height: 16),
           ],
           const SizedBox(height: 24),
           const SectionHeader(
@@ -210,6 +213,48 @@ class HomeDashboard extends StatelessWidget {
                 .toList(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StaggeredReveal extends StatefulWidget {
+  const _StaggeredReveal({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_StaggeredReveal> createState() => _StaggeredRevealState();
+}
+
+class _StaggeredRevealState extends State<_StaggeredReveal> {
+  bool _visible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(Duration(milliseconds: 90 * widget.index), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _visible = true;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSlide(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOut,
+      offset: _visible ? Offset.zero : const Offset(0, 0.08),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        opacity: _visible ? 1 : 0,
+        child: widget.child,
       ),
     );
   }
