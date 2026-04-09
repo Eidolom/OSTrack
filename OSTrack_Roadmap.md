@@ -11,7 +11,7 @@
 - [x] Auth and onboarding flow
 - [x] Local preferences persistence (onboarding + platform)
 - [x] Settings screen wired to preferences
-- [x] Authentication service scaffolding in onboarding Step 1
+- [x] Google + Apple SDK auth integration in onboarding Step 1
 
 ### Implementation Log
 
@@ -22,6 +22,7 @@
 - 2026-04-09 — Added SharedPreferences-backed app bootstrap: onboarding state, selected platform, and onboarding choices now persist across restarts.
 - 2026-04-09 — Added Settings screen from Profile for platform preference updates and onboarding reset.
 - 2026-04-09 — Added auth service stubs and provider selection UX in onboarding Step 1.
+- 2026-04-09 — Replaced auth stubs with Google Sign-In and Sign in with Apple SDK flows, plus typed auth error handling.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

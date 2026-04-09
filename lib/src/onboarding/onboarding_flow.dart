@@ -31,6 +31,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   late final Set<String> _followedUsers;
   AuthProvider _selectedAuthProvider = AuthProvider.google;
   bool _isAuthenticating = false;
+  String? _signedInIdentity;
 
   @override
   void initState() {
@@ -63,14 +64,37 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _isAuthenticating = true;
     });
 
-    await widget.authService.signIn(_selectedAuthProvider);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final session = await widget.authService.signIn(_selectedAuthProvider);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _signedInIdentity = session.email ?? session.displayName;
+      });
+    } on AuthFailure catch (failure) {
+      if (!mounted) {
+        return;
+      }
+
+      messenger.showSnackBar(
+        SnackBar(content: Text(failure.message)),
+      );
+      return;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAuthenticating = false;
+        });
+      }
+    }
+
     if (!mounted) {
       return;
     }
-
-    setState(() {
-      _isAuthenticating = false;
-    });
 
     _nextStep();
   }
@@ -81,6 +105,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _SignUpStep(
         selectedProvider: _selectedAuthProvider,
         isLoading: _isAuthenticating,
+        signedInIdentity: _signedInIdentity,
         onSelectProvider: (provider) {
           setState(() {
             _selectedAuthProvider = provider;
@@ -182,12 +207,14 @@ class _SignUpStep extends StatelessWidget {
   const _SignUpStep({
     required this.selectedProvider,
     required this.isLoading,
+    required this.signedInIdentity,
     required this.onSelectProvider,
     required this.onContinue,
   });
 
   final AuthProvider selectedProvider;
   final bool isLoading;
+  final String? signedInIdentity;
   final ValueChanged<AuthProvider> onSelectProvider;
   final Future<void> Function() onContinue;
 
@@ -219,6 +246,15 @@ class _SignUpStep extends StatelessWidget {
             selected: selectedProvider == AuthProvider.email,
             onTap: () => onSelectProvider(AuthProvider.email),
           ),
+          if (signedInIdentity != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Signed in as $signedInIdentity',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: OstrackColors.teal,
+                  ),
+            ),
+          ],
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: isLoading ? null : onContinue,

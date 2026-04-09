@@ -8,9 +8,14 @@ import 'ostrack_shell.dart';
 import 'ostrack_theme.dart';
 
 class OstrackApp extends StatefulWidget {
-  const OstrackApp({super.key, this.catalog = const OstrackCatalog()});
+  const OstrackApp({
+    super.key,
+    this.catalog = const OstrackCatalog(),
+    this.authService = const AuthService(),
+  });
 
   final OstrackCatalog catalog;
+  final AuthService authService;
 
   @override
   State<OstrackApp> createState() => _OstrackAppState();
@@ -18,7 +23,6 @@ class OstrackApp extends StatefulWidget {
 
 class _OstrackAppState extends State<OstrackApp> {
   final AppPreferencesStore _preferencesStore = AppPreferencesStore();
-  final AuthService _authService = const AuthService();
   AppPreferences? _preferences;
 
   @override
@@ -62,7 +66,7 @@ class _OstrackAppState extends State<OstrackApp> {
       final prefs => OnboardingFlow(
           catalog: widget.catalog,
           initialPreferences: prefs,
-          authService: _authService,
+          authService: widget.authService,
           onComplete: _handlePreferencesUpdated,
         ),
     };
