@@ -46,6 +46,8 @@
 - 2026-04-09 — Removed committed Auth0 tenant values from tracked source files; auth config now uses `--dart-define` and local Android Gradle property overrides.
 - 2026-04-09 — Updated ERD alias source enum to replace `vgmdb` with `musicbrainz` for launch-aligned ingestion sources.
 - 2026-04-09 — Hardened ERD sign-off draft: added `media_sources`, `composers`, and `scene_timeline_votes`; resolved `track_composers` FK to `composers.id`; replaced mutable timeline vote counter design; added canonical language policy and baseline index plan.
+- 2026-04-09 — Replaced stale inline Phase 0.1 schema snippets with a canonical pointer to `docs/phase0/ERD_SIGNOFF.md` to eliminate roadmap/ERD drift.
+- 2026-04-09 — Clarified ERD semantics: `consent_log` keeps `recorded_at` only, and `track_platform_ids` explicitly uses a natural composite primary key `(track_id, platform)`.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 
@@ -84,64 +86,10 @@ Get the data model right before writing a single UI component. Migrations are ex
 
 Design and implement the multi-language alias schema. This is the most load-bearing decision in the entire backend.
 
-```
-tracks
-  ├── id (uuid)
-  ├── canonical_name (text)
-  ├── canonical_lang (enum: ja, en, ko, ...)
-  ├── duration_seconds (int)
-  ├── composer_ids (uuid[])
-  ├── media_source_id (uuid)
-  └── created_at / updated_at
+Canonical schema source of truth:
+- [docs/phase0/ERD_SIGNOFF.md](docs/phase0/ERD_SIGNOFF.md)
 
-track_aliases
-  ├── id (uuid)
-  ├── track_id (uuid → tracks)
-  ├── name (text)
-  ├── lang (text)
-  ├── source (enum: spotify, apple_music, vgmdb, user_submitted, internal)
-  └── verified (bool)
-
-track_platform_ids
-  ├── track_id (uuid → tracks)
-  ├── platform (enum: spotify, apple_music, youtube, youtube_music)
-  └── platform_track_id (text)
-```
-
-**Consent & Privacy Schema**
-
-```
-users
-  ├── id, username, email, avatar_url
-  ├── deleted_at (timestamptz, nullable)
-  ├── anonymized_at (timestamptz, nullable)
-  └── recommendation_consent (bool, default false)
-
-consent_log
-  ├── id (uuid)
-  ├── user_id (uuid)
-  ├── consent_type (enum: essential, recommendations, marketing)
-  ├── granted (bool)
-  ├── ip_hash (text)          -- hashed, not raw
-  └── recorded_at (timestamptz)
-```
-
-**Scene Timeline Schema**
-
-```
-scene_timeline_entries
-  ├── id (uuid)
-  ├── track_id (uuid → tracks)
-  ├── media_source_id (uuid → media_sources)
-  ├── description (text)                  -- required
-  ├── episode_chapter (text, nullable)    -- e.g. "Episode 7"
-  ├── timestamp_seconds (int, nullable)   -- e.g. 1334 (= 22:14)
-  ├── fidelity (enum: description, approximate, verified)
-  ├── submitted_by (uuid → users)
-  ├── verified_by (uuid → users, nullable)
-  ├── bounty_open (bool, default false)
-  └── upvotes (int)
-```
+This roadmap intentionally avoids duplicating full table snippets to prevent drift. Any Phase 0 schema updates must be made in the ERD sign-off document first.
 
 **Deliverable:** Full ERD reviewed and signed off. No schema changes allowed after Phase 0 exit without a formal migration plan.
 

@@ -64,6 +64,9 @@ Unique constraint:
 - platform_track_id (text, not null)
 - created_at (timestamptz)
 
+Primary key (natural composite):
+- (track_id, platform)
+
 Unique constraint:
 - (platform, platform_track_id)
 
@@ -85,7 +88,6 @@ Unique constraint:
 - granted (bool)
 - ip_hash (text, not null)
 - recorded_at (timestamptz)
-- created_at (timestamptz)
 
 ### scene_timeline_entries
 - id (uuid, pk)
