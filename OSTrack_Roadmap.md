@@ -233,7 +233,6 @@ Validate the core loop: **discover → catalog → discuss → share**. Get real
 
 **Authentication**
 - Google Sign-In + Apple Sign-In (primary)
-- Email/password fallback
 - Consent flow at end of onboarding (essential vs. recommendation profiling — separate prompts)
 
 **Onboarding**

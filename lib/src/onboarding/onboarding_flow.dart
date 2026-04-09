@@ -239,13 +239,6 @@ class _SignUpStep extends StatelessWidget {
             selected: selectedProvider == AuthProvider.apple,
             onTap: () => onSelectProvider(AuthProvider.apple),
           ),
-          const SizedBox(height: 12),
-          _AuthOption(
-            label: 'Use email instead',
-            icon: Icons.mail_outline,
-            selected: selectedProvider == AuthProvider.email,
-            onTap: () => onSelectProvider(AuthProvider.email),
-          ),
           if (signedInIdentity != null) ...[
             const SizedBox(height: 14),
             Text(

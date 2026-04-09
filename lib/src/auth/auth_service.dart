@@ -5,8 +5,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 enum AuthProvider {
   google('Google'),
-  apple('Apple'),
-  email('Email');
+  apple('Apple');
 
   const AuthProvider(this.label);
 
@@ -56,11 +55,6 @@ class AuthService {
           return _signInWithGoogle();
         case AuthProvider.apple:
           return _signInWithApple();
-        case AuthProvider.email:
-          throw const AuthFailure(
-            reason: AuthFailureReason.configuration,
-            message: 'Email sign-in needs backend auth setup. Use Google or Apple for now.',
-          );
       }
     } on AuthFailure {
       rethrow;
