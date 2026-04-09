@@ -4,7 +4,7 @@
 ## Current Build Status
 
 - Phase: 0 — Foundation
-- Focus: Flutter scaffold, seed catalog, onboarding flow, local persistence, settings, auth stubs
+- Focus: Flutter scaffold, seed catalog, onboarding flow, local persistence, settings, Auth0 login, Phase 0 deliverable docs
 - [x] Project scaffold created
 - [x] Starter counter app replaced
 - [x] Data model and seed catalog
@@ -12,6 +12,10 @@
 - [x] Local preferences persistence (onboarding + platform)
 - [x] Settings screen wired to preferences
 - [x] Auth0-based Google + Apple login integration in onboarding Step 1
+- [x] ERD sign-off draft package added
+- [x] Typesense validation plan added
+- [x] Staging infrastructure checklist added
+- [x] Privacy Policy + Terms of Service draft docs added
 
 ### Implementation Log
 
@@ -27,6 +31,14 @@
 - 2026-04-09 — Added credential templates and setup checklist (`AUTH_SETUP.md`) for final provider file drop-in.
 - 2026-04-09 — Simplified auth to a single Auth0 Universal Login path and removed Firebase/GoogleService file requirements.
 - 2026-04-09 — Fixed Android Auth0 callback wiring by setting `manifestPlaceholders["auth0Domain"]` to the active tenant domain used in app auth config.
+- 2026-04-09 — Added Phase 0 ERD sign-off draft package (`docs/phase0/ERD_SIGNOFF.md`).
+- 2026-04-09 — Added Typesense multilingual validation plan (`docs/phase0/TYPESENSE_VALIDATION_PLAN.md`).
+- 2026-04-09 — Added staging infrastructure provisioning checklist (`docs/phase0/STAGING_INFRA_CHECKLIST.md`).
+- 2026-04-09 — Added legal draft documents for Privacy Policy and Terms of Service (`docs/legal/PRIVACY_POLICY_DRAFT.md`, `docs/legal/TERMS_OF_SERVICE_DRAFT.md`).
+- 2026-04-09 — Added a Phase 0 execution backlog to drive completion of remaining exit criteria (`docs/phase0/PHASE0_EXECUTION_BACKLOG.md`).
+- 2026-04-09 — Locked Phase 0 ERD decisions: composer relationships use a `track_composers` join table and constrained values use native Postgres enums.
+- 2026-04-09 — Added initial Phase 0 seed target and ingestion batching plan (`docs/phase0/MEDIA_SEED_TARGETS.md`).
+- 2026-04-09 — Added a concrete Typesense smoke-test matrix for multilingual search validation (`docs/phase0/TYPESENSE_SMOKE_TESTS.md`).
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 
