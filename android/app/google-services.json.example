@@ -1,0 +1,35 @@
+{
+  "_comment": "Copy to google-services.json and replace with real Firebase config.",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "replace-with-your-project-id",
+    "storage_bucket": "replace-with-your-project-id.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:replace_me",
+        "android_client_info": {
+          "package_name": "com.ostrack.ostrack_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "replace-me.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "replace-me"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
