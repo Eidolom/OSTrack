@@ -50,6 +50,7 @@
 - 2026-04-09 — Clarified ERD semantics: `consent_log` keeps `recorded_at` only, and `track_platform_ids` explicitly uses a natural composite primary key `(track_id, platform)`.
 - 2026-04-09 — UI/UX Step 1 foundation pass completed: new typography stack (Playfair Display, Space Mono, Outfit, DM Mono), desaturated palette tokens, flatter elevation model (no card shadows), and simplified solid backdrop baseline.
 - 2026-04-09 — UI/UX Step 2 Home pass completed: redesigned On This Day as a featured editorial card and refactored feed activity cards with avatar-led social hierarchy and clearer activity metadata.
+- 2026-04-09 — UI/UX Step 3 Explore pass completed: redesigned category tiles into destination-style art blocks with count labels and replaced trending rows with a horizontal artwork rail.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

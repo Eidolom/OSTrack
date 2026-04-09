@@ -461,24 +461,41 @@ class ExploreDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: categories
-                .map(
-                  (item) => _CategoryTile(label: item.label, accent: item.accent),
-                )
-                .toList(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tileWidth = (constraints.maxWidth - 12) / 2;
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: categories
+                    .map(
+                      (item) => _CategoryTile(
+                        label: item.label,
+                        accent: item.accent,
+                        width: tileWidth,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
           ),
           const SizedBox(height: 24),
           const SectionHeader(
             title: 'Trending this week',
             subtitle: 'High activity, high intent, and the soundtrack pages people are opening most.',
           ),
-          for (final item in trends) ...[
-            _TrendRow(label: item.label, meta: item.meta, accent: item.accent),
-            if (item != trends.last) const SizedBox(height: 12),
-          ],
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final item in trends) ...[
+                  _TrendingOstTile(label: item.label, meta: item.meta, accent: item.accent),
+                  if (item != trends.last) const SizedBox(width: 12),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -486,45 +503,121 @@ class ExploreDashboard extends StatelessWidget {
 }
 
 class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({required this.label, required this.accent});
+  const _CategoryTile({
+    required this.label,
+    required this.accent,
+    required this.width,
+  });
 
   final String label;
   final Color accent;
+  final double width;
+
+  String get _trackCountLabel {
+    return switch (label) {
+      'Video Games' => '18.4k tracks',
+      'Anime' => '9.3k tracks',
+      'Movies & TV' => '6.7k tracks',
+      'K-Drama' => '3.2k tracks',
+      'Composers' => '4.1k profiles',
+      'Originals' => '120 drops',
+      _ => 'Catalog',
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 164,
+      width: width,
       child: OstrackCard(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.zero,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [accent.withOpacity(0.28), OstrackColors.surface.withOpacity(0.9)],
+          colors: [accent.withValues(alpha: 0.36), OstrackColors.surfaceAlt],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(Icons.grid_view_rounded, color: accent),
+        child: Container(
+          height: 176,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                OstrackColors.background.withValues(alpha: 0.55),
+                OstrackColors.background.withValues(alpha: 0.86),
+              ],
             ),
-            const SizedBox(height: 18),
-            Text(label, style: Theme.of(context).textTheme.titleMedium),
-          ],
+          ),
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: accent.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 4, bottom: 4),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: accent.withValues(alpha: 0.22),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 4, top: 4),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: accent.withValues(alpha: 0.14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _trackCountLabel,
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _TrendRow extends StatelessWidget {
-  const _TrendRow({required this.label, required this.meta, required this.accent});
+class _TrendingOstTile extends StatelessWidget {
+  const _TrendingOstTile({required this.label, required this.meta, required this.accent});
 
   final String label;
   final String meta;
@@ -532,32 +625,40 @@ class _TrendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OstrackCard(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: accent.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(16),
+    return SizedBox(
+      width: 164,
+      child: OstrackCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 122,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [accent.withValues(alpha: 0.46), accent.withValues(alpha: 0.16)],
+                ),
+              ),
+              child: Center(
+                child: Icon(Icons.album, size: 40, color: accent.withValues(alpha: 0.9)),
+              ),
             ),
-            child: Icon(Icons.whatshot, color: accent),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(meta, style: Theme.of(context).textTheme.bodyMedium),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(meta, style: Theme.of(context).textTheme.bodyMedium),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right, color: OstrackColors.textMuted),
-        ],
+          ],
+        ),
       ),
     );
   }
