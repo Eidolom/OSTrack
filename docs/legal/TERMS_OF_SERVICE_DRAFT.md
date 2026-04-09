@@ -3,6 +3,8 @@
 Last updated: 2026-04-09
 Status: Draft for legal review
 
+Related plan: [LEGAL_REVIEW_PLAN.md](LEGAL_REVIEW_PLAN.md)
+
 ## 1. Acceptance
 By using OSTrack, you agree to these Terms.
 

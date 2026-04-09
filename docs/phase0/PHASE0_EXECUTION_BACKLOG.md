@@ -47,10 +47,11 @@ Done when:
 - Environment plan documented in [STAGING_ENVIRONMENT_PLAN.md](STAGING_ENVIRONMENT_PLAN.md).
 
 ## Workstream E - Legal Finalization
-1. Legal review of [PRIVACY_POLICY_DRAFT.md](../legal/PRIVACY_POLICY_DRAFT.md).
+1. Legal review of [PRIVACY_POLICY_DRAFT.md](../legal/PRIVACY_POLICY_DRAFT.md). [in progress]
 2. Legal review of [TERMS_OF_SERVICE_DRAFT.md](../legal/TERMS_OF_SERVICE_DRAFT.md).
 3. Apply counsel edits and finalize publication version.
 
 Done when:
 - Final legal docs approved.
 - Publication-ready markdown files produced.
+- Review flow documented in [../legal/LEGAL_REVIEW_PLAN.md](../legal/LEGAL_REVIEW_PLAN.md).

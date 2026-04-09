@@ -34,7 +34,9 @@
 - 2026-04-09 — Added Phase 0 ERD sign-off draft package (`docs/phase0/ERD_SIGNOFF.md`).
 - 2026-04-09 — Added Typesense multilingual validation plan (`docs/phase0/TYPESENSE_VALIDATION_PLAN.md`).
 - 2026-04-09 — Added staging infrastructure provisioning checklist (`docs/phase0/STAGING_INFRA_CHECKLIST.md`).
+- 2026-04-09 — Added a concrete staging environment plan for app hosting, database, storage, search, CI/CD, and smoke tests (`docs/phase0/STAGING_ENVIRONMENT_PLAN.md`).
 - 2026-04-09 — Added legal draft documents for Privacy Policy and Terms of Service (`docs/legal/PRIVACY_POLICY_DRAFT.md`, `docs/legal/TERMS_OF_SERVICE_DRAFT.md`).
+- 2026-04-09 — Added a legal review plan to drive finalization of the Privacy Policy and Terms of Service (`docs/legal/LEGAL_REVIEW_PLAN.md`).
 - 2026-04-09 — Added a Phase 0 execution backlog to drive completion of remaining exit criteria (`docs/phase0/PHASE0_EXECUTION_BACKLOG.md`).
 - 2026-04-09 — Locked Phase 0 ERD decisions: composer relationships use a `track_composers` join table and constrained values use native Postgres enums.
 - 2026-04-09 — Added initial Phase 0 seed target and ingestion batching plan (`docs/phase0/MEDIA_SEED_TARGETS.md`).

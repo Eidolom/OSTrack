@@ -3,6 +3,8 @@
 Last updated: 2026-04-09
 Status: Draft for legal review
 
+Related plan: [LEGAL_REVIEW_PLAN.md](LEGAL_REVIEW_PLAN.md)
+
 ## 1. Summary
 OSTrack is a social cataloging platform for soundtrack discovery and discussion. This draft explains what data we process, why we process it, and your controls.
 
