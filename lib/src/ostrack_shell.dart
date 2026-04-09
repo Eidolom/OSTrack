@@ -700,39 +700,9 @@ class LibraryDashboard extends StatelessWidget {
               height: tabHeight,
               child: TabBarView(
                 children: [
-                  _LibraryTab(
-                    title: 'Shelves',
-                    child: Column(
-                      children: [
-                        for (final item in shelves) ...[
-                          _ShelfCard(title: item.title, meta: item.meta, accent: item.accent),
-                          if (item != shelves.last) const SizedBox(height: 12),
-                        ],
-                      ],
-                    ),
-                  ),
-                  _LibraryTab(
-                    title: 'Ratings',
-                    child: Column(
-                      children: [
-                        for (final item in ratings) ...[
-                          _ShelfCard(title: item.title, meta: item.meta, accent: item.accent),
-                          if (item != ratings.last) const SizedBox(height: 12),
-                        ],
-                      ],
-                    ),
-                  ),
-                  _LibraryTab(
-                    title: 'History',
-                    child: Column(
-                      children: [
-                        for (final item in history) ...[
-                          _ShelfCard(title: item.title, meta: item.meta, accent: item.accent),
-                          if (item != history.last) const SizedBox(height: 12),
-                        ],
-                      ],
-                    ),
-                  ),
+                  _ShelvesTab(shelves: shelves),
+                  _RatingsTab(ratings: ratings),
+                  _HistoryTab(history: history),
                 ],
               ),
             ),
@@ -743,11 +713,10 @@ class LibraryDashboard extends StatelessWidget {
   }
 }
 
-class _LibraryTab extends StatelessWidget {
-  const _LibraryTab({required this.title, required this.child});
+class _ShelvesTab extends StatelessWidget {
+  const _ShelvesTab({required this.shelves});
 
-  final String title;
-  final Widget child;
+  final List<LibraryEntry> shelves;
 
   @override
   Widget build(BuildContext context) {
@@ -755,17 +724,82 @@ class _LibraryTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          Text('Shelves', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
-          child,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tileWidth = (constraints.maxWidth - 12) / 2;
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: tileWidth,
+                    child: const _CreateShelfTile(),
+                  ),
+                  ...shelves.map(
+                    (item) => SizedBox(
+                      width: tileWidth,
+                      child: _ShelfGridTile(
+                        title: item.title,
+                        meta: item.meta,
+                        accent: item.accent,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
   }
 }
 
-class _ShelfCard extends StatelessWidget {
-  const _ShelfCard({required this.title, required this.meta, required this.accent});
+class _CreateShelfTile extends StatelessWidget {
+  const _CreateShelfTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return OstrackCard(
+      child: SizedBox(
+        height: 220,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: OstrackColors.teal.withValues(alpha: 0.14),
+                border: Border.all(color: OstrackColors.teal.withValues(alpha: 0.45)),
+              ),
+              child: const Icon(Icons.add, color: OstrackColors.teal),
+            ),
+            const SizedBox(height: 16),
+            Text('Start a shelf', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+              'Name your next collection',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShelfGridTile extends StatelessWidget {
+  const _ShelfGridTile({
+    required this.title,
+    required this.meta,
+    required this.accent,
+  });
 
   final String title;
   final String meta;
@@ -774,19 +808,137 @@ class _ShelfCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OstrackCard(
-      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(child: _MosaicCell(color: accent.withValues(alpha: 0.34))),
+                      const SizedBox(height: 4),
+                      Expanded(child: _MosaicCell(color: accent.withValues(alpha: 0.2))),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(child: _MosaicCell(color: accent.withValues(alpha: 0.15))),
+                      const SizedBox(height: 4),
+                      Expanded(child: _MosaicCell(color: accent.withValues(alpha: 0.28))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(meta, maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _MosaicCell extends StatelessWidget {
+  const _MosaicCell({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+}
+
+class _RatingsTab extends StatelessWidget {
+  const _RatingsTab({required this.ratings});
+
+  final List<LibraryEntry> ratings;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Ratings', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 16),
+          const _RatingsSummaryCard(),
+          const SizedBox(height: 12),
+          for (final item in ratings) ...[
+            _RatingRow(title: item.title, meta: item.meta, accent: item.accent),
+            if (item != ratings.last) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingsSummaryCard extends StatelessWidget {
+  const _RatingsSummaryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return OstrackCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('You\'ve rated 1,284 tracks', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text('Average score: 3.8★', style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+          Text('3.8★', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: OstrackColors.gold)),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingRow extends StatelessWidget {
+  const _RatingRow({
+    required this.title,
+    required this.meta,
+    required this.accent,
+  });
+
+  final String title;
+  final String meta;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return OstrackCard(
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(16),
+              color: accent.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(Icons.collections_bookmark_outlined, color: accent),
+            child: Icon(Icons.album_outlined, color: accent),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,8 +949,96 @@ class _ShelfCard extends StatelessWidget {
               ],
             ),
           ),
+          Text('★★★★☆', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: OstrackColors.gold)),
         ],
       ),
+    );
+  }
+}
+
+class _HistoryTab extends StatelessWidget {
+  const _HistoryTab({required this.history});
+
+  final List<LibraryEntry> history;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('History', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text('Listening diary', style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 16),
+          for (var i = 0; i < history.length; i++) ...[
+            _HistoryTimelineRow(
+              title: history[i].title,
+              meta: history[i].meta,
+              accent: history[i].accent,
+              isLast: i == history.length - 1,
+            ),
+            if (i < history.length - 1) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryTimelineRow extends StatelessWidget {
+  const _HistoryTimelineRow({
+    required this.title,
+    required this.meta,
+    required this.accent,
+    required this.isLast,
+  });
+
+  final String title;
+  final String meta;
+  final Color accent;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 24,
+          child: Column(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accent,
+                ),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 64,
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OstrackCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(meta, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
