@@ -176,38 +176,11 @@ class HomeDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OstrackCard(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF183145), Color(0xFF102432), Color(0xFF0D1823)],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const OstrackPill(label: 'On This Day', icon: Icons.auto_awesome, color: OstrackColors.gold),
-                const SizedBox(height: 16),
-                Text('Bloodborne released 10 years ago.', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(
-                  'Its most-loved track is still the one people tag when they want a fight to feel mythic.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const _MiniMetric(label: 'Top track', value: 'The First Hunter'),
-                    const SizedBox(width: 12),
-                    const _MiniMetric(label: 'Activity', value: '214 posts'),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          const _OnThisDayFeatureCard(),
           const SizedBox(height: 24),
           const SectionHeader(
             title: 'Today on OSTrack',
-            subtitle: 'Recent shelf activity, reviews, and timeline tags from people you follow.',
+            subtitle: 'What people in your circle are rating, tagging, and shelving right now.',
           ),
           for (final item in feed) ...[
             _FeedCard(
@@ -216,7 +189,7 @@ class HomeDashboard extends StatelessWidget {
               subtitle: item.subtitle,
               accent: item.accent,
             ),
-            if (item != feed.last) const SizedBox(height: 12),
+            if (item != feed.last) const SizedBox(height: 16),
           ],
           const SizedBox(height: 24),
           const SectionHeader(
@@ -242,30 +215,62 @@ class HomeDashboard extends StatelessWidget {
   }
 }
 
-class _MiniMetric extends StatelessWidget {
-  const _MiniMetric({required this.label, required this.value});
-
-  final String label;
-  final String value;
+class _OnThisDayFeatureCard extends StatelessWidget {
+  const _OnThisDayFeatureCard();
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 6),
-            Text(value, style: Theme.of(context).textTheme.titleMedium),
-          ],
-        ),
+    return OstrackCard(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF232125), Color(0xFF19181D), Color(0xFF141418)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ON THIS DAY',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: OstrackColors.gold),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            height: 164,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2B2232), Color(0xFF19161F)],
+              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '2015',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: OstrackColors.gold,
+                        fontSize: 40,
+                      ),
+                ),
+                const Spacer(),
+                Text(
+                  'Bloodborne Original Soundtrack',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Top track this week: The First Hunter',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -284,34 +289,111 @@ class _FeedCard extends StatelessWidget {
   final String subtitle;
   final Color accent;
 
+  String get _username {
+    final match = RegExp(r'^(@\w+)').firstMatch(title);
+    return match?.group(1) ?? '@listener';
+  }
+
+  String get _activityLabel {
+    if (title.contains('reviewed')) {
+      return 'RATING';
+    }
+    if (title.contains('tagged')) {
+      return 'SCENE TAG';
+    }
+    return 'SHELF ACTIVITY';
+  }
+
+  String get _activityText {
+    final prefix = '$_username ';
+    if (title.startsWith(prefix)) {
+      return title.substring(prefix.length);
+    }
+    return title;
+  }
+
   @override
   Widget build(BuildContext context) {
     return OstrackCard(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: accent.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: accent),
+          Row(
+            children: [
+              _FeedAvatar(username: _username, accent: accent),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_username, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: Theme.of(context).textTheme.labelMedium),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _activityLabel,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: accent),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 6),
-                Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
+          const SizedBox(height: 14),
+          Text(
+            _activityText,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(height: 1.2),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(width: 8),
+              Text(
+                'Open activity',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: OstrackColors.textHigh),
+              ),
+              const Spacer(),
+              const Icon(Icons.chevron_right, color: OstrackColors.textMuted),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FeedAvatar extends StatelessWidget {
+  const _FeedAvatar({required this.username, required this.accent});
+
+  final String username;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = username.replaceAll('@', '').substring(0, username.length > 2 ? 2 : 1).toUpperCase();
+
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: accent.withValues(alpha: 0.8), width: 1.2),
+        color: accent.withValues(alpha: 0.18),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: OstrackColors.textHigh,
+            ),
       ),
     );
   }
