@@ -45,6 +45,7 @@
 - 2026-04-09 — Updated Phase 0 entry criteria wording to align with the open-data ingestion strategy instead of a VGMdb partnership prerequisite.
 - 2026-04-09 — Removed committed Auth0 tenant values from tracked source files; auth config now uses `--dart-define` and local Android Gradle property overrides.
 - 2026-04-09 — Updated ERD alias source enum to replace `vgmdb` with `musicbrainz` for launch-aligned ingestion sources.
+- 2026-04-09 — Hardened ERD sign-off draft: added `media_sources`, `composers`, and `scene_timeline_votes`; resolved `track_composers` FK to `composers.id`; replaced mutable timeline vote counter design; added canonical language policy and baseline index plan.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 
