@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+typedef PreferencesUpdater = Future<void> Function(AppPreferences updated);
+
 class AppPreferences {
   const AppPreferences({
     required this.onboardingCompleted,

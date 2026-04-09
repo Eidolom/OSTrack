@@ -41,6 +41,8 @@
 - 2026-04-09 — Locked Phase 0 ERD decisions: composer relationships use a `track_composers` join table and constrained values use native Postgres enums.
 - 2026-04-09 — Added initial Phase 0 seed target and ingestion batching plan (`docs/phase0/MEDIA_SEED_TARGETS.md`).
 - 2026-04-09 — Added a concrete Typesense smoke-test matrix for multilingual search validation (`docs/phase0/TYPESENSE_SMOKE_TESTS.md`).
+- 2026-04-09 — Refactored shared app contracts and UI primitives: moved `PreferencesUpdater` to `app_preferences.dart` and extracted backdrop/card/pill widgets into `lib/src/ostrack_widgets.dart` to remove shell-layer coupling.
+- 2026-04-09 — Updated Phase 0 entry criteria wording to align with the open-data ingestion strategy instead of a VGMdb partnership prerequisite.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 
@@ -66,7 +68,7 @@
 ### Entry Criteria
 - Core team assembled (minimum: 2 backend, 1 Flutter, 1 design)
 - Legal entity formed
-- VGMdb data partnership conversation initiated
+- Open-data ingestion source stack defined (Spotify, Apple Music, MusicBrainz, AniList, IGDB)
 
 ### Goals
 Get the data model right before writing a single UI component. Migrations are expensive; a bad schema is a tax you pay forever.

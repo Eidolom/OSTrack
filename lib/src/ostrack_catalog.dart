@@ -14,6 +14,9 @@ class FeedStory {
   final String title;
   final String subtitle;
   final Color accent;
+
+  // Seed-only UI shape. Production feed data should use backend enum/asset keys,
+  // not framework-level icon types.
 }
 
 class CategoryEntry {

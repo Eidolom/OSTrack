@@ -6,6 +6,7 @@ import 'ostrack_catalog.dart';
 import 'onboarding/onboarding_flow.dart';
 import 'ostrack_shell.dart';
 import 'ostrack_theme.dart';
+import 'ostrack_widgets.dart';
 
 class OstrackApp extends StatefulWidget {
   const OstrackApp({

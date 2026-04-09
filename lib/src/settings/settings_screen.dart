@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../app_preferences.dart';
-import '../ostrack_shell.dart';
 import '../ostrack_theme.dart';
-
-typedef PreferencesUpdater = Future<void> Function(AppPreferences updated);
+import '../ostrack_widgets.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({

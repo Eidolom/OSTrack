@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../app_preferences.dart';
 import '../auth/auth_service.dart';
 import '../ostrack_catalog.dart';
-import '../ostrack_shell.dart';
 import '../ostrack_theme.dart';
+import '../ostrack_widgets.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
