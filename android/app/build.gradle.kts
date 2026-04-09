@@ -28,7 +28,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["auth0Domain"] = "REPLACE_ME.us.auth0.com"
+        manifestPlaceholders["auth0Domain"] = "dev-58tp0mtjukekxfr5.eu.auth0.com"
         manifestPlaceholders["auth0Scheme"] = "com.ostrack.ostrackapp"
     }
 

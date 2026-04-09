@@ -26,6 +26,7 @@
 - 2026-04-09 — Wired native auth platform setup: Android Google Services Gradle plugin, iOS Apple Sign-In entitlements, and Google URL scheme placeholders.
 - 2026-04-09 — Added credential templates and setup checklist (`AUTH_SETUP.md`) for final provider file drop-in.
 - 2026-04-09 — Simplified auth to a single Auth0 Universal Login path and removed Firebase/GoogleService file requirements.
+- 2026-04-09 — Fixed Android Auth0 callback wiring by setting `manifestPlaceholders["auth0Domain"]` to the active tenant domain used in app auth config.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 
