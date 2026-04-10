@@ -9,6 +9,7 @@ import 'backend/backend_config.dart';
 import 'backend/media_repository.dart';
 import 'backend/shelf_repository.dart';
 import 'backend/cache_models.dart';
+import 'backend/local_cache/cache_models.dart';
 import 'ostrack_catalog.dart';
 import 'playback/original_audio_service.dart';
 import 'playback/playback_handoff_service.dart';
@@ -31,6 +32,7 @@ final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
   return SupabaseMediaRepository(
     client: BackendConfig.hasSupabase ? Supabase.instance.client : null,
     seedCatalog: ref.watch(catalogProvider),
+    isar: ref.watch(isarProvider),
   );
 });
 
@@ -231,3 +233,40 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     state = const AsyncValue.data(null);
   }
 }
+
+// ============================================================================
+// HOME FEED CONTROLLER - CACHE-THEN-NETWORK PATTERN
+// ============================================================================
+
+class HomeFeedController extends AsyncNotifier<List<CachedFeedStory>> {
+  @override
+  Future<List<CachedFeedStory>> build() async {
+    final repo = ref.watch(mediaRepositoryProvider);
+
+    // 1. INSTANT LOAD: Yield local cache immediately
+    final cached = await repo.getLocalFeed();
+    if (cached.isNotEmpty) {
+      state = AsyncValue.data(cached);
+    }
+
+    // 2. BACKGROUND FETCH: Get fresh data from Supabase
+    try {
+      final fresh = await repo.getNetworkFeed();
+      // 3. UPDATE CACHE: Save to Isar
+      await repo.saveToLocalFeed(fresh);
+      // 4. UPDATE UI
+      return fresh;
+    } catch (e, st) {
+      // If we are offline, suppress the error and just keep showing the cache
+      if (cached.isNotEmpty) {
+        return cached;
+      }
+      // Only throw if we have no cache AND no network
+      Error.throwWithStackTrace(e, st);
+    }
+  }
+}
+
+final homeFeedProvider = AsyncNotifierProvider<HomeFeedController, List<CachedFeedStory>>(
+  HomeFeedController.new,
+);

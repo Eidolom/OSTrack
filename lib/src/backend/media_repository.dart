@@ -3,10 +3,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:isar/isar.dart';
 
 import '../backend/backend_config.dart';
 import '../ostrack_catalog.dart';
 import '../ostrack_theme.dart';
+import 'local_cache/cache_models.dart';
 
 class MediaSearchResult {
   const MediaSearchResult({
@@ -25,17 +27,25 @@ abstract class MediaRepository {
   Future<List<TrendEntry>> fetchTrends();
   Future<ActiveTrackEntry> fetchActiveTrack();
   Future<List<MediaSearchResult>> searchTracks(String query);
+
+  // Cache-Then-Network pattern methods
+  Future<List<CachedFeedStory>> getLocalFeed();
+  Future<List<CachedFeedStory>> getNetworkFeed();
+  Future<void> saveToLocalFeed(List<CachedFeedStory> stories);
 }
 
 class SupabaseMediaRepository implements MediaRepository {
   SupabaseMediaRepository({
     required SupabaseClient? client,
     required OstrackCatalog seedCatalog,
+    required Isar? isar,
   })  : _client = client,
-        _seed = seedCatalog;
+        _seed = seedCatalog,
+        _isar = isar;
 
   final SupabaseClient? _client;
   final OstrackCatalog _seed;
+  final Isar? _isar;
 
   @override
   Future<List<CategoryEntry>> fetchCategories() async {
@@ -273,5 +283,71 @@ class SupabaseMediaRepository implements MediaRepository {
       Color(0xFF7CC8FF),
     ];
     return pool[hash % pool.length];
+  }
+
+  // =========================================================================
+  // CACHE-THEN-NETWORK METHODS
+  // =========================================================================
+
+  @override
+  Future<List<CachedFeedStory>> getLocalFeed() async {
+    if (_isar == null) {
+      return const [];
+    }
+
+    try {
+      return await _isar.cachedFeedStorys.where().findAll();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<List<CachedFeedStory>> getNetworkFeed() async {
+    if (_client == null) {
+      return const [];
+    }
+
+    try {
+      // Fetch feed stories from Supabase (example implementation)
+      final rows = await _client.from('feed_stories').select('*').limit(50);
+
+      return (rows as List<dynamic>)
+          .map((row) {
+            final r = row as Map<String, dynamic>;
+            final story = CachedFeedStory()
+              ..remoteId = r['id']?.toString() ?? ''
+              ..title = r['title']?.toString() ?? ''
+              ..subtitle = r['subtitle']?.toString() ?? ''
+              ..iconName = r['icon']?.toString() ?? 'article'
+              ..accentHex = r['accent_hex']?.toString() ?? '#FFFFFF'
+              ..createdAt = r['created_at'] != null
+                  ? DateTime.parse(r['created_at']?.toString() ?? '')
+                  : DateTime.now();
+            return story;
+          })
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<void> saveToLocalFeed(List<CachedFeedStory> stories) async {
+    if (_isar == null) {
+      return;
+    }
+
+    try {
+      await _isar.writeTxn(() async {
+        // Clear old stories before inserting new ones (optional, depending on strategy)
+        // await _isar.cachedFeedStorys.clear();
+        
+        // Insert or update stories
+        await _isar.cachedFeedStorys.putAll(stories);
+      });
+    } catch (_) {
+      // Silently fail on cache write errors
+    }
   }
 }

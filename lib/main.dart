@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'src/backend/backend_config.dart';
 import 'src/backend/cache_models.dart';
+import 'src/backend/local_cache/cache_models.dart' as local_cache;
 import 'src/ostrack_app.dart';
 
 Future<void> main() async {
@@ -31,6 +32,8 @@ Future<void> main() async {
       isarShelfTrackSchema,
       isarTrackRatingSchema,
       isarPendingMutationSchema,
+      local_cache.CachedFeedStorySchema,
+      local_cache.PendingMutationSchema,
     ],
     directory: dir.path,
   );
