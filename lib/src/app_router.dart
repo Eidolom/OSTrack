@@ -10,6 +10,7 @@ import 'ostrack_catalog.dart';
 import 'ostrack_shell.dart';
 import 'onboarding/onboarding_flow.dart';
 import 'ostrack_widgets.dart';
+import 'widgets/offline_boundary.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _RouterNotifier(ref);
@@ -127,14 +128,16 @@ class _HomeRoutePage extends ConsumerWidget {
     final preferencesController = ref.read(appPreferencesControllerProvider.notifier);
     final authController = ref.read(authControllerProvider.notifier);
 
-    return OstrackShell(
-      catalog: catalog,
-      preferences: preferences,
-      onPreferencesChanged: preferencesController.savePreferences,
-      onSignOut: () {
-        authController.signOut();
-        preferencesController.setOnboardingCompleted(false);
-      },
+    return OfflineBoundary(
+      child: OstrackShell(
+        catalog: catalog,
+        preferences: preferences,
+        onPreferencesChanged: preferencesController.savePreferences,
+        onSignOut: () {
+          authController.signOut();
+          preferencesController.setOnboardingCompleted(false);
+        },
+      ),
     );
   }
 }
