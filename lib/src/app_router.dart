@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'app_preferences.dart';
 import 'app_providers.dart';
+import 'auth/auth_service.dart';
 import 'mascot_monetization.dart';
 import 'ostrack_catalog.dart';
 import 'ostrack_shell.dart';
@@ -11,11 +12,11 @@ import 'onboarding/onboarding_flow.dart';
 import 'ostrack_widgets.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final preferences = ref.watch(appPreferencesControllerProvider);
-  final catalog = ref.watch(catalogProvider);
+  final notifier = _RouterNotifier(ref);
 
   final router = GoRouter(
     initialLocation: '/',
+    refreshListenable: notifier,
     routes: [
       GoRoute(
         path: '/',
@@ -23,11 +24,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => _OnboardingRoutePage(catalog: catalog),
+        builder: (context, state) => _OnboardingRoutePage(catalog: ref.read(catalogProvider)),
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => _HomeRoutePage(catalog: catalog),
+        builder: (context, state) => _HomeRoutePage(catalog: ref.read(catalogProvider)),
       ),
       GoRoute(
         path: '/store',
@@ -36,6 +37,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
     redirect: (context, state) {
       final path = state.matchedLocation;
+      final preferences = ref.read(appPreferencesControllerProvider);
       final preferenceValue = preferences.valueOrNull;
 
       if (preferences.isLoading || preferences.hasError) {
@@ -56,9 +58,27 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
   );
 
-  ref.onDispose(router.dispose);
+  ref.onDispose(() {
+    notifier.dispose();
+    router.dispose();
+  });
   return router;
 });
+
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<AppPreferences>>(
+      appPreferencesControllerProvider,
+      (previous, next) => notifyListeners(),
+    );
+    _ref.listen<AsyncValue<AuthSession?>>(
+      authControllerProvider,
+      (previous, next) => notifyListeners(),
+    );
+  }
+
+  final Ref _ref;
+}
 
 class _BootstrapPage extends StatelessWidget {
   const _BootstrapPage();
