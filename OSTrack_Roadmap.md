@@ -63,6 +63,7 @@
 - 2026-04-10 — Architecture upgrade: introduced `flutter_riverpod` for global preferences/auth state, wrapped the app in `ProviderScope`, and added `go_router` routes for `/`, `/onboarding`, `/home`, and `/store` with deep-link-aware redirects.
 - 2026-04-10 — Router lifecycle fix: removed state-watching router recreation, added `refreshListenable` bridge via a Riverpod-backed `_RouterNotifier`, and switched route/redirect state access to `ref.read` to preserve navigation stack during preference/auth updates.
 - 2026-04-10 — Backend integration step started: added Supabase + Typesense dependencies, introduced env-driven backend config, created a repository layer with Supabase/Typesense plus resilient local fallback, wired Riverpod providers for categories/trends/active-track/search, and connected Explore + mini-player runtime data to backend-backed providers.
+- 2026-04-10 — Backend hardening follow-up: switched Typesense client auth define to explicit search-only key naming, added configurable connection timeout for mobile reliability, and updated search query strategy to prioritize canonical + alias fields with graceful fallback for schema variance.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

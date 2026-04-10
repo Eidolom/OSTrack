@@ -150,24 +150,21 @@ class SupabaseMediaRepository implements MediaRepository {
 
     try {
       final client = HttpClient();
-      final uri = Uri.parse(
-        '${BackendConfig.typesenseProtocol}://${BackendConfig.typesenseHost}:${BackendConfig.typesensePort}/collections/tracks/documents/search'
-        '?q=${Uri.encodeQueryComponent(trimmed)}'
-        '&query_by=title,aliases,source_title,composer_name'
-        '&per_page=8',
-      );
-      final request = await client.getUrl(uri);
-      request.headers.set('X-TYPESENSE-API-KEY', BackendConfig.typesenseApiKey);
-      final response = await request.close();
-      final payload = await response.transform(utf8.decoder).join();
+      client.connectionTimeout = Duration(milliseconds: BackendConfig.typesenseConnectionTimeoutMs);
+
+      final hits = (await _searchTypesense(
+                client: client,
+                query: trimmed,
+                queryBy: 'canonical_name,aliases.name,title,source_title,composer_name',
+              ) ??
+              await _searchTypesense(
+                client: client,
+                query: trimmed,
+                queryBy: 'title,aliases,source_title,composer_name',
+              )) ??
+          const <dynamic>[];
       client.close(force: true);
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        return _fallbackSearch(trimmed);
-      }
-
-      final decoded = jsonDecode(payload) as Map<String, dynamic>;
-      final hits = decoded['hits'] as List<dynamic>? ?? const [];
       if (hits.isEmpty) {
         return _fallbackSearch(trimmed);
       }
@@ -183,6 +180,32 @@ class SupabaseMediaRepository implements MediaRepository {
     } catch (_) {
       return _fallbackSearch(trimmed);
     }
+  }
+
+  Future<List<dynamic>?> _searchTypesense({
+    required HttpClient client,
+    required String query,
+    required String queryBy,
+  }) async {
+    final uri = Uri.parse(
+      '${BackendConfig.typesenseProtocol}://${BackendConfig.typesenseHost}:${BackendConfig.typesensePort}/collections/tracks/documents/search'
+      '?q=${Uri.encodeQueryComponent(query)}'
+      '&query_by=${Uri.encodeQueryComponent(queryBy)}'
+      '&sort_by=${Uri.encodeQueryComponent('_text_match:desc')}'
+      '&per_page=8',
+    );
+
+    final request = await client.getUrl(uri);
+    request.headers.set('X-TYPESENSE-API-KEY', BackendConfig.typesenseSearchApiKey);
+    final response = await request.close();
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return null;
+    }
+
+    final payload = await response.transform(utf8.decoder).join();
+    final decoded = jsonDecode(payload) as Map<String, dynamic>;
+    return decoded['hits'] as List<dynamic>? ?? const [];
   }
 
   List<MediaSearchResult> _fallbackSearch(String query) {
