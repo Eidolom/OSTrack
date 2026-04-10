@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
 
 import 'app_providers.dart';
 import 'app_router.dart';
@@ -9,9 +10,11 @@ import 'ostrack_theme.dart';
 class OstrackApp extends StatelessWidget {
   const OstrackApp({
     super.key,
+    required this.isar,
     this.authService = const AuthService(),
   });
 
+  final Isar isar;
   final AuthService authService;
 
   @override
@@ -19,6 +22,7 @@ class OstrackApp extends StatelessWidget {
     return ProviderScope(
       overrides: [
         authServiceProvider.overrideWithValue(authService),
+        isarProvider.overrideWithValue(isar),
       ],
       child: const _OstrackAppView(),
     );
