@@ -26,12 +26,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late String _selectedPlatform;
+  late bool _moderationAccessEnabled;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     _selectedPlatform = widget.preferences.selectedPlatform;
+    _moderationAccessEnabled = widget.preferences.moderationAccessEnabled;
   }
 
   Future<void> _savePlatform() async {
@@ -63,6 +65,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     await widget.onPreferencesChanged(
       widget.preferences.copyWith(onboardingCompleted: false),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = false;
+    });
+  }
+
+  Future<void> _saveModerationAccess(bool enabled) async {
+    setState(() {
+      _moderationAccessEnabled = enabled;
+      _isSaving = true;
+    });
+
+    await widget.onPreferencesChanged(
+      widget.preferences.copyWith(moderationAccessEnabled: enabled),
     );
 
     if (!mounted) {
@@ -137,6 +158,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 )
                               : const Icon(Icons.save_outlined),
                           label: const Text('Save platform'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OstrackCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Moderation tools', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Enable access to the scene-tag moderation queue for trusted contributors.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        SwitchListTile.adaptive(
+                          value: _moderationAccessEnabled,
+                          onChanged: _isSaving ? null : _saveModerationAccess,
+                          title: const Text('Moderation access'),
+                          subtitle: const Text('Required for /moderation operations'),
+                          contentPadding: EdgeInsets.zero,
                         ),
                       ],
                     ),

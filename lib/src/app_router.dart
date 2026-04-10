@@ -51,8 +51,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final onboardingCompleted = preferenceValue?.onboardingCompleted ?? false;
+      final moderationAccessEnabled = preferenceValue?.moderationAccessEnabled ?? false;
       if (path == '/') {
         return onboardingCompleted ? '/home' : '/onboarding';
+      }
+      if (path == '/moderation' && !moderationAccessEnabled) {
+        return '/home';
       }
       if (!onboardingCompleted && path != '/onboarding' && path != '/') {
         return '/onboarding';

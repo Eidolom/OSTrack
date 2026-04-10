@@ -10,6 +10,7 @@ class AppPreferences {
     required this.followedUsers,
     required this.ownedMascotIds,
     required this.equippedMascotId,
+    required this.moderationAccessEnabled,
   });
 
   static const defaults = AppPreferences(
@@ -30,6 +31,7 @@ class AppPreferences {
       'founding-archivist',
     ],
     equippedMascotId: 'conductor-skeleton',
+    moderationAccessEnabled: false,
   );
 
   final bool onboardingCompleted;
@@ -38,6 +40,7 @@ class AppPreferences {
   final List<String> followedUsers;
   final List<String> ownedMascotIds;
   final String equippedMascotId;
+  final bool moderationAccessEnabled;
 
   AppPreferences copyWith({
     bool? onboardingCompleted,
@@ -46,6 +49,7 @@ class AppPreferences {
     List<String>? followedUsers,
     List<String>? ownedMascotIds,
     String? equippedMascotId,
+    bool? moderationAccessEnabled,
   }) {
     return AppPreferences(
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
@@ -54,6 +58,7 @@ class AppPreferences {
       followedUsers: followedUsers ?? this.followedUsers,
       ownedMascotIds: ownedMascotIds ?? this.ownedMascotIds,
       equippedMascotId: equippedMascotId ?? this.equippedMascotId,
+      moderationAccessEnabled: moderationAccessEnabled ?? this.moderationAccessEnabled,
     );
   }
 }
@@ -65,6 +70,7 @@ class AppPreferencesStore {
   static const _followedUsersKey = 'followed_users';
   static const _ownedMascotIdsKey = 'owned_mascot_ids';
   static const _equippedMascotIdKey = 'equipped_mascot_id';
+  static const _moderationAccessEnabledKey = 'moderation_access_enabled';
 
   Future<AppPreferences> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -77,6 +83,8 @@ class AppPreferencesStore {
       followedUsers: prefs.getStringList(_followedUsersKey) ?? defaults.followedUsers,
       ownedMascotIds: prefs.getStringList(_ownedMascotIdsKey) ?? defaults.ownedMascotIds,
       equippedMascotId: prefs.getString(_equippedMascotIdKey) ?? defaults.equippedMascotId,
+      moderationAccessEnabled:
+          prefs.getBool(_moderationAccessEnabledKey) ?? defaults.moderationAccessEnabled,
     );
   }
 
@@ -88,5 +96,6 @@ class AppPreferencesStore {
     await prefs.setStringList(_followedUsersKey, value.followedUsers);
     await prefs.setStringList(_ownedMascotIdsKey, value.ownedMascotIds);
     await prefs.setString(_equippedMascotIdKey, value.equippedMascotId);
+    await prefs.setBool(_moderationAccessEnabledKey, value.moderationAccessEnabled);
   }
 }

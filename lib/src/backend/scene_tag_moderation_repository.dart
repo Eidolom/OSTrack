@@ -14,6 +14,15 @@ abstract class SceneTagModerationRepository {
     required bool isHidden,
   });
 
+  Future<void> logModerationAction({
+    required String tagId,
+    required String action,
+    required String actorId,
+    String? note,
+  });
+
+  Future<List<ModerationActionEntry>> fetchRecentActions({int limit = 20});
+
   bool shouldAutoHide(int reportCount) => reportCount > 2;
 }
 
@@ -33,6 +42,22 @@ class ModerationQueueEntry {
   final DateTime? lastReportedAt;
 }
 
+class ModerationActionEntry {
+  const ModerationActionEntry({
+    required this.tagId,
+    required this.action,
+    required this.actorId,
+    required this.at,
+    this.note,
+  });
+
+  final String tagId;
+  final String action;
+  final String actorId;
+  final DateTime at;
+  final String? note;
+}
+
 class SupabaseSceneTagModerationRepository implements SceneTagModerationRepository {
   SupabaseSceneTagModerationRepository({required SupabaseClient? client}) : _client = client;
 
@@ -41,6 +66,7 @@ class SupabaseSceneTagModerationRepository implements SceneTagModerationReposito
   final Set<String> _fallbackHiddenTags = <String>{};
   final Map<String, String?> _fallbackSourceTitles = <String, String?>{};
   final Map<String, DateTime> _fallbackLastReportedAt = <String, DateTime>{};
+  final List<ModerationActionEntry> _fallbackActionLog = <ModerationActionEntry>[];
 
   @override
   Future<int> reportTag({
@@ -218,6 +244,77 @@ class SupabaseSceneTagModerationRepository implements SceneTagModerationReposito
           .eq('id', tagId);
     } catch (_) {
       // Ignore schema variance; local moderation fallback remains in place.
+    }
+  }
+
+  @override
+  Future<void> logModerationAction({
+    required String tagId,
+    required String action,
+    required String actorId,
+    String? note,
+  }) async {
+    final timestamp = DateTime.now();
+    _fallbackActionLog.insert(
+      0,
+      ModerationActionEntry(
+        tagId: tagId,
+        action: action,
+        actorId: actorId,
+        at: timestamp,
+        note: note,
+      ),
+    );
+    if (_fallbackActionLog.length > 200) {
+      _fallbackActionLog.removeRange(200, _fallbackActionLog.length);
+    }
+
+    final client = _client;
+    if (client == null) {
+      return;
+    }
+
+    try {
+      await client.from('scene_tag_moderation_actions').insert({
+        'tag_id': tagId,
+        'action': action,
+        'actor_id': actorId,
+        'note': note,
+        'created_at': timestamp.toIso8601String(),
+      });
+    } catch (_) {
+      // Keep fallback action log when backend table is unavailable.
+    }
+  }
+
+  @override
+  Future<List<ModerationActionEntry>> fetchRecentActions({int limit = 20}) async {
+    final client = _client;
+    if (client == null) {
+      return _fallbackActionLog.take(limit).toList(growable: false);
+    }
+
+    try {
+      final response = await client
+          .from('scene_tag_moderation_actions')
+          .select('tag_id, action, actor_id, note, created_at')
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      final rows = response as List<dynamic>;
+      return rows.map((row) {
+        final map = row as Map<String, dynamic>;
+        return ModerationActionEntry(
+          tagId: map['tag_id']?.toString() ?? 'unknown',
+          action: map['action']?.toString() ?? 'unknown',
+          actorId: map['actor_id']?.toString() ?? 'unknown',
+          note: map['note']?.toString(),
+          at: DateTime.tryParse(map['created_at']?.toString() ?? '') ??
+              DateTime.fromMillisecondsSinceEpoch(0),
+        );
+      }).toList(growable: false);
+    } catch (_) {
+      return _fallbackActionLog.take(limit).toList(growable: false);
     }
   }
 

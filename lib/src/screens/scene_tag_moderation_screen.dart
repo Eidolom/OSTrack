@@ -15,30 +15,45 @@ class SceneTagModerationScreen extends ConsumerStatefulWidget {
 
 class _SceneTagModerationScreenState extends ConsumerState<SceneTagModerationScreen> {
   late Future<List<ModerationQueueEntry>> _queueFuture;
+  late Future<List<ModerationActionEntry>> _actionsFuture;
 
   @override
   void initState() {
     super.initState();
     _queueFuture = _loadQueue();
+    _actionsFuture = _loadActions();
   }
 
   Future<List<ModerationQueueEntry>> _loadQueue() {
     return ref.read(sceneTagModerationRepositoryProvider).fetchModerationQueue();
   }
 
+  Future<List<ModerationActionEntry>> _loadActions() {
+    return ref.read(sceneTagModerationRepositoryProvider).fetchRecentActions(limit: 12);
+  }
+
   Future<void> _refreshQueue() async {
     final next = _loadQueue();
+    final nextActions = _loadActions();
     setState(() {
       _queueFuture = next;
+      _actionsFuture = nextActions;
     });
-    await next;
+    await Future.wait([next, nextActions]);
   }
 
   Future<void> _setHiddenState(ModerationQueueEntry entry, bool isHidden) async {
-    await ref.read(sceneTagModerationRepositoryProvider).setTagHiddenState(
+    final repo = ref.read(sceneTagModerationRepositoryProvider);
+    await repo.setTagHiddenState(
           tagId: entry.tagId,
           isHidden: isHidden,
         );
+    await repo.logModerationAction(
+      tagId: entry.tagId,
+      action: isHidden ? 'hide' : 'restore',
+      actorId: 'local_user',
+      note: 'Action executed from moderation queue screen.',
+    );
 
     if (!mounted) {
       return;
@@ -81,6 +96,37 @@ class _SceneTagModerationScreenState extends ConsumerState<SceneTagModerationScr
                     icon: const Icon(Icons.refresh),
                     tooltip: 'Refresh moderation queue',
                   ),
+                ),
+                FutureBuilder<List<ModerationActionEntry>>(
+                  future: _actionsFuture,
+                  builder: (context, snapshot) {
+                    final actions = snapshot.data ?? const <ModerationActionEntry>[];
+                    if (actions.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                      child: OstrackCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Recent moderation actions', style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            for (var i = 0; i < actions.length; i++) ...[
+                              Text(
+                                '${actions[i].action.toUpperCase()} · ${actions[i].tagId} · ${actions[i].at}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (i < actions.length - 1) const SizedBox(height: 4),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 Expanded(
                   child: FutureBuilder<List<ModerationQueueEntry>>(

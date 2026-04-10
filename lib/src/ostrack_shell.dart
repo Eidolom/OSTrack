@@ -2469,21 +2469,23 @@ class ProfileDashboard extends StatelessWidget {
               label: const Text('Open Settings'),
             ),
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const SceneTagModerationScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.gavel_outlined),
-              label: const Text('Open Moderation Queue'),
+          if (preferences.moderationAccessEnabled) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SceneTagModerationScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.gavel_outlined),
+                label: const Text('Open Moderation Queue'),
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 16),
           _CollectorHeroCard(profile: profile, equippedMascot: equippedMascot),
           const SizedBox(height: 16),
