@@ -82,7 +82,7 @@ class SupabaseShelfRepository implements ShelfRepository {
   @override
   Future<List<IsarShelf>> getShelves() async {
     // Return cached shelves first
-    final cached = await _isar.isarShelves.where().findAll();
+    final cached = await _isar.isarShelfs.where().findAll();
     if (cached.isNotEmpty) {
       // Trigger background sync
       _syncShelvesBackground();
@@ -272,7 +272,7 @@ class SupabaseShelfRepository implements ShelfRepository {
 
       // Update cache
       await _isar.writeTxn(() async {
-        await _isar.isarShelves.putAll(shelves);
+        await _isar.isarShelfs.putAll(shelves);
       });
 
       return shelves;
@@ -421,7 +421,7 @@ class LocalShelfRepository implements ShelfRepository {
 
   @override
   Future<List<IsarShelf>> getShelves() async {
-    return _isar.isarShelves.where().findAll();
+    return _isar.isarShelfs.where().findAll();
   }
 
   @override
