@@ -121,52 +121,80 @@ class _OstrackShellState extends ConsumerState<OstrackShell> {
             ),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!_isPlayerExpanded)
-            _MiniPlayerBar(
-              trackTitle: activeTrack.title,
-              sourceTitle: activeTrack.source,
-              onExpand: () {
-                setState(() {
-                  _isPlayerExpanded = true;
-                });
-              },
+      bottomNavigationBar: _isPlayerExpanded
+          ? null
+          : ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0A0A0A).withValues(alpha: 0.65),
+                    border: Border(
+                      top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _MiniPlayerBar(
+                        trackTitle: activeTrack.title,
+                        sourceTitle: activeTrack.source,
+                        onExpand: () {
+                          setState(() {
+                            _isPlayerExpanded = true;
+                          });
+                        },
+                      ),
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          navigationBarTheme: NavigationBarThemeData(
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            indicatorColor: OstrackColors.gold.withValues(alpha: 0.16),
+                            labelTextStyle: WidgetStateProperty.all(
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.transparent,
+                                  ),
+                            ),
+                          ),
+                        ),
+                        child: NavigationBar(
+                          selectedIndex: _currentIndex,
+                          onDestinationSelected: (index) {
+                            setState(() {
+                              _currentIndex = index;
+                            });
+                          },
+                          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                          destinations: const [
+                            NavigationDestination(
+                              icon: Icon(Icons.home_outlined),
+                              selectedIcon: Icon(Icons.home),
+                              label: 'Home',
+                            ),
+                            NavigationDestination(
+                              icon: Icon(Icons.explore_outlined),
+                              selectedIcon: Icon(Icons.explore),
+                              label: 'Explore',
+                            ),
+                            NavigationDestination(
+                              icon: Icon(Icons.library_music_outlined),
+                              selectedIcon: Icon(Icons.library_music),
+                              label: 'Library',
+                            ),
+                            NavigationDestination(
+                              icon: Icon(Icons.person_outline),
+                              selectedIcon: Icon(Icons.person),
+                              label: 'Profile',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          if (!_isPlayerExpanded)
-            NavigationBar(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.explore_outlined),
-                  selectedIcon: Icon(Icons.explore),
-                  label: 'Explore',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.library_music_outlined),
-                  selectedIcon: Icon(Icons.library_music),
-                  label: 'Library',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
-            ),
-        ],
-      ),
     );
   }
 }
@@ -191,27 +219,24 @@ class _MiniPlayerBar extends ConsumerWidget {
     final player = ref.watch(originalAudioServiceProvider).player;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           onTap: onExpand,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Ink(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                decoration: BoxDecoration(
-                  color: OstrackColors.backgroundAlt.withValues(alpha: 0.62),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+          child: Ink(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border(
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                     StreamBuilder<Duration>(
                       stream: player.positionStream,
                       builder: (context, snapshot) {
@@ -260,14 +285,14 @@ class _MiniPlayerBar extends ConsumerWidget {
                         );
                       },
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(6),
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -276,7 +301,7 @@ class _MiniPlayerBar extends ConsumerWidget {
                           ),
                           child: const Icon(Icons.album, color: OstrackColors.gold, size: 20),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,8 +320,8 @@ class _MiniPlayerBar extends ConsumerWidget {
                                 sourceTitle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.6),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.55),
                                     ),
                               ),
                             ],
@@ -304,19 +329,16 @@ class _MiniPlayerBar extends ConsumerWidget {
                         ),
                         IconButton(
                           onPressed: onExpand,
-                          icon: const Icon(Icons.graphic_eq),
-                          color: OstrackColors.gold,
-                          tooltip: 'Expand player',
+                          icon: const Icon(Icons.pause_rounded),
+                          color: Colors.white,
+                          tooltip: 'Open player',
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
+              ],
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -618,77 +640,55 @@ class _FeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OstrackCard(
-      padding: const EdgeInsets.all(16),
-      radius: 14,
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          OstrackColors.surfaceAlt.withValues(alpha: 0.92),
-          OstrackColors.backgroundAlt.withValues(alpha: 0.96),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Row(
         children: [
-          Row(
-            children: [
-              const _FeedAvatar(),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_username, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: Theme.of(context).textTheme.labelMedium),
-                  ],
-                ),
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [accent.withValues(alpha: 0.35), OstrackColors.surfaceAlt],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: OstrackColors.teal.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _activityText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                 ),
-                child: Text(
-                  _activityLabel,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: OstrackColors.teal),
+                const SizedBox(height: 4),
+                Text(
+                  '$_username · $subtitle · $_activityLabel',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            _activityText,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(height: 1.2),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(icon, size: 18, color: accent),
-              const SizedBox(width: 8),
-              Text(
-                'Open activity',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: OstrackColors.gold),
-              ),
-              const Spacer(),
-              const Icon(Icons.chevron_right, color: OstrackColors.textMuted),
-            ],
-          ),
+          const SizedBox(width: 12),
+          Icon(Icons.more_vert, color: Colors.white.withValues(alpha: 0.3), size: 20),
         ],
       ),
     );
-  }
-}
-
-class _FeedAvatar extends StatelessWidget {
-  const _FeedAvatar();
-
-  @override
-  Widget build(BuildContext context) {
-    return const UserAvatarWithMascot(avatarRadius: 19);
   }
 }
 
