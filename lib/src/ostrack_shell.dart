@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +12,7 @@ import 'ostrack_catalog.dart';
 import 'mascot_monetization.dart';
 import 'mascot_sprite.dart';
 import 'playback/original_audio_service.dart';
+import 'playback/palette_service.dart';
 import 'playback/playback_handoff_service.dart';
 import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
@@ -168,7 +171,7 @@ class _OstrackShellState extends ConsumerState<OstrackShell> {
   }
 }
 
-class _MiniPlayerBar extends StatelessWidget {
+class _MiniPlayerBar extends ConsumerWidget {
   const _MiniPlayerBar({
     required this.trackTitle,
     required this.sourceTitle,
@@ -180,54 +183,135 @@ class _MiniPlayerBar extends StatelessWidget {
   final VoidCallback onExpand;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accentColor = ref.watch(trackPaletteProvider).maybeWhen(
+          data: (palette) => palette.vibrant,
+          orElse: () => OstrackColors.gold,
+        );
+    final player = ref.watch(originalAudioServiceProvider).player;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: onExpand,
-          child: Ink(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-            decoration: BoxDecoration(
-              color: OstrackColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF2B2232), Color(0xFF17161B)],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Ink(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                decoration: BoxDecoration(
+                  color: OstrackColors.backgroundAlt.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    StreamBuilder<Duration>(
+                      stream: player.positionStream,
+                      builder: (context, snapshot) {
+                        final progress = snapshot.data ?? Duration.zero;
+                        final total = player.duration ?? Duration.zero;
+                        final progressRatio = total.inMilliseconds == 0
+                            ? 0.0
+                            : (progress.inMilliseconds / total.inMilliseconds)
+                                .clamp(0.0, 1.0);
+
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  height: 3,
+                                  width: constraints.maxWidth * progressRatio,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(999),
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        accentColor.withValues(alpha: 0.9),
+                                        accentColor,
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: accentColor.withValues(alpha: 0.45),
+                                        blurRadius: 6,
+                                        spreadRadius: 0.5,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
-                  ),
-                  child: const Icon(Icons.album, color: OstrackColors.gold, size: 20),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF2B2232), Color(0xFF17161B)],
+                            ),
+                          ),
+                          child: const Icon(Icons.album, color: OstrackColors.gold, size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                trackTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                sourceTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.6),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: onExpand,
+                          icon: const Icon(Icons.graphic_eq),
+                          color: OstrackColors.gold,
+                          tooltip: 'Expand player',
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(trackTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
-                      const SizedBox(height: 2),
-                      Text(sourceTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: onExpand,
-                  icon: const Icon(Icons.graphic_eq),
-                  color: OstrackColors.teal,
-                  tooltip: 'Expand player',
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -407,7 +491,7 @@ class _StaggeredRevealState extends State<_StaggeredReveal> {
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(Duration(milliseconds: 90 * widget.index), () {
+    Future<void>.delayed(Duration(milliseconds: 50 * widget.index), () {
       if (!mounted) {
         return;
       }
@@ -534,6 +618,15 @@ class _FeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return OstrackCard(
       padding: const EdgeInsets.all(16),
+      radius: 14,
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          OstrackColors.surfaceAlt.withValues(alpha: 0.92),
+          OstrackColors.backgroundAlt.withValues(alpha: 0.96),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -554,12 +647,12 @@ class _FeedCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
+                  color: OstrackColors.teal.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   _activityLabel,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: accent),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: OstrackColors.teal),
                 ),
               ),
             ],
@@ -576,7 +669,7 @@ class _FeedCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Open activity',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: OstrackColors.textHigh),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: OstrackColors.gold),
               ),
               const Spacer(),
               const Icon(Icons.chevron_right, color: OstrackColors.textMuted),

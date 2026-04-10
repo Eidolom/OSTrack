@@ -69,6 +69,11 @@ class UserAvatarWithMascot extends ConsumerWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
+                        color: equippedMascot.assetColor.withValues(alpha: 0.32),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
                         color: Colors.black.withValues(alpha: 0.6),
                         blurRadius: 8,
                         spreadRadius: -2,
