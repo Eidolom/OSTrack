@@ -892,6 +892,7 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
 
   final List<_SceneTimelineEntry> _sceneEntries = <_SceneTimelineEntry>[
     const _SceneTimelineEntry(
+      id: 'scene-001',
       title: 'Malenia reveal',
       description: '"The choir bloom hits exactly as the cutscene breaks into phase two."',
       status: 'Verified',
@@ -899,6 +900,7 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
       timestamp: '02:14',
     ),
     const _SceneTimelineEntry(
+      id: 'scene-002',
       title: 'Roundtable Hold return',
       description: '"Quiet motif after your first major shardbearer. Still waiting for precise timestamp."',
       status: 'Bounty open',
@@ -1063,7 +1065,9 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
   }
 
   Widget _buildSceneTimeline() {
-    final timeline = List<_SceneTimelineEntry>.unmodifiable(_sceneEntries);
+    final timeline = List<_SceneTimelineEntry>.unmodifiable(
+      _sceneEntries.where((entry) => !entry.isHidden),
+    );
 
     return ListView(
       children: [
@@ -1076,6 +1080,10 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
           ),
         ),
         const SizedBox(height: 10),
+        if (timeline.isEmpty)
+          const OstrackCard(
+            child: Text('No visible scene tags right now. Hidden tags are pending moderation review.'),
+          ),
         for (var i = 0; i < timeline.length; i++) ...[
           _SceneTimelineCard(
             title: timeline[i].title,
@@ -1083,10 +1091,49 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
             status: timeline[i].status,
             statusColor: timeline[i].statusColor,
             timestamp: timeline[i].timestamp,
+            reportCount: timeline[i].reportCount,
+            onReport: () => _reportSceneEntry(timeline[i].id),
           ),
           if (i < timeline.length - 1) const SizedBox(height: 10),
         ],
       ],
+    );
+  }
+
+  Future<void> _reportSceneEntry(String entryId) async {
+    final repo = ref.read(sceneTagModerationRepositoryProvider);
+    final reports = await repo.reportTag(
+      tagId: entryId,
+      reason: 'user_reported_scene_tag',
+      sourceTitle: widget.title,
+    );
+
+    final shouldHide = repo.shouldAutoHide(reports);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      final index = _sceneEntries.indexWhere((entry) => entry.id == entryId);
+      if (index == -1) {
+        return;
+      }
+
+      _sceneEntries[index] = _sceneEntries[index].copyWith(
+        reportCount: reports,
+        isHidden: shouldHide,
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          shouldHide
+              ? 'Tag hidden pending moderation review.'
+              : 'Report submitted. Thank you for helping keep scene tags accurate.',
+        ),
+      ),
     );
   }
 
@@ -1171,6 +1218,7 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
                             _sceneEntries.insert(
                               0,
                               _SceneTimelineEntry(
+                                id: 'scene-${DateTime.now().microsecondsSinceEpoch}',
                                 title: 'Community submission',
                                 description: '"${descriptionController.text.trim()}"',
                                 status: requiresTimestamp ? 'Timestamp submitted' : 'Description submitted',
@@ -1370,6 +1418,8 @@ class _SceneTimelineCard extends StatelessWidget {
     required this.description,
     required this.status,
     required this.statusColor,
+    required this.reportCount,
+    required this.onReport,
     this.timestamp,
   });
 
@@ -1377,6 +1427,8 @@ class _SceneTimelineCard extends StatelessWidget {
   final String description;
   final String status;
   final Color statusColor;
+  final int reportCount;
+  final VoidCallback onReport;
   final String? timestamp;
 
   @override
@@ -1389,6 +1441,12 @@ class _SceneTimelineCard extends StatelessWidget {
             children: [
               Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
               Text(status, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: statusColor)),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: onReport,
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                tooltip: 'Report scene tag',
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1403,6 +1461,13 @@ class _SceneTimelineCard extends StatelessWidget {
               style: Theme.of(context).textTheme.labelMedium?.copyWith(color: OstrackColors.teal),
             ),
           ],
+          if (reportCount > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Reports: $reportCount',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: OstrackColors.textMuted),
+            ),
+          ],
         ],
       ),
     );
@@ -1411,18 +1476,41 @@ class _SceneTimelineCard extends StatelessWidget {
 
 class _SceneTimelineEntry {
   const _SceneTimelineEntry({
+    required this.id,
     required this.title,
     required this.description,
     required this.status,
     required this.statusColor,
     this.timestamp,
+    this.reportCount = 0,
+    this.isHidden = false,
   });
+
+  final String id;
 
   final String title;
   final String description;
   final String status;
   final Color statusColor;
   final String? timestamp;
+  final int reportCount;
+  final bool isHidden;
+
+  _SceneTimelineEntry copyWith({
+    int? reportCount,
+    bool? isHidden,
+  }) {
+    return _SceneTimelineEntry(
+      id: id,
+      title: title,
+      description: description,
+      status: status,
+      statusColor: statusColor,
+      timestamp: timestamp,
+      reportCount: reportCount ?? this.reportCount,
+      isHidden: isHidden ?? this.isHidden,
+    );
+  }
 }
 
 class _MediaTrackEntry {

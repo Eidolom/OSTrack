@@ -322,10 +322,16 @@ Originals are released with liner notes — a short piece about the arranger, wh
 ### Guiding Principle
 OSTrack is a **metadata and community platform first**. It does not host, stream, or reproduce copyrighted audio — except for Originals, which are fully licensed.
 
+### Metadata Boundary (Enforced)
+- Persistent catalog metadata in Supabase must come from open/community sources (MusicBrainz, AniList, IGDB, Wikidata, and user submissions).
+- Spotify and Apple Music APIs are runtime-only integrations for matching and handoff; their titles, artwork, and track metadata must not be stored in OSTrack databases or long-term caches.
+- Platform IDs may be stored only as routing references when terms permit, without storing provider-owned descriptive metadata.
+
 ### What Is Safe
 | Activity | Status |
 |---|---|
-| Storing metadata (titles, composers, tracklists) | ✅ Safe |
+| Storing open/community metadata (titles, composers, tracklists) | ✅ Safe |
+| Storing Spotify/Apple descriptive metadata or artwork in Supabase/Isar | ❌ Not allowed |
 | User reviews, ratings, shelf names | ✅ Safe |
 | Scene timeline tags (descriptive text) | ✅ Safe |
 | Linking out to Spotify / Apple Music / YouTube | ✅ Safe |

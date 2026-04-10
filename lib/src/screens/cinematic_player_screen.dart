@@ -171,7 +171,7 @@ class CinematicPlayerScreen extends ConsumerWidget {
                   const SizedBox(height: 32),
 
                   // Contextual Scene Tag (OSTrack Differentiator)
-                  _buildSceneTimelineTag(context, track),
+                  _buildSceneTimelineTag(context, ref, track),
 
                   const SizedBox(height: 16),
 
@@ -242,7 +242,7 @@ class CinematicPlayerScreen extends ConsumerWidget {
   }
 
   /// Scene timeline context tag (dynamic in Phase 2)
-  Widget _buildSceneTimelineTag(BuildContext context, ActiveTrackEntry track) {
+  Widget _buildSceneTimelineTag(BuildContext context, WidgetRef ref, ActiveTrackEntry track) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -270,6 +270,35 @@ class CinematicPlayerScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () async {
+              final count = await ref.read(sceneTagModerationRepositoryProvider).reportTag(
+                    tagId: 'player:${track.title}',
+                    reason: 'user_reported_scene_tag',
+                    sourceTitle: track.source,
+                  );
+
+              if (!context.mounted) {
+                return;
+              }
+
+              final shouldHide = ref
+                  .read(sceneTagModerationRepositoryProvider)
+                  .shouldAutoHide(count);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    shouldHide
+                        ? 'Tag hidden pending moderation review.'
+                        : 'Report submitted. Thanks for helping moderate OSTrack.',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.flag_outlined, size: 16),
+            label: const Text('Report'),
+          ),
           TextButton.icon(
             onPressed: () {
               showModalBottomSheet<void>(

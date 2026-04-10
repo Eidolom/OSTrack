@@ -8,6 +8,7 @@ import 'auth/auth_service.dart';
 import 'backend/backend_config.dart';
 import 'backend/mascot_repository.dart';
 import 'backend/media_repository.dart';
+import 'backend/scene_tag_moderation_repository.dart';
 import 'backend/shelf_repository.dart';
 import 'backend/cache_models.dart';
 import 'backend/local_cache/cache_models.dart';
@@ -43,6 +44,12 @@ final mascotRepositoryProvider = Provider<MascotRepository>((ref) {
     client: BackendConfig.hasSupabase ? Supabase.instance.client : null,
     seedCatalog: const OstrackMascotCatalog(),
     preferencesStore: ref.watch(appPreferencesStoreProvider),
+  );
+});
+
+final sceneTagModerationRepositoryProvider = Provider<SceneTagModerationRepository>((ref) {
+  return SupabaseSceneTagModerationRepository(
+    client: BackendConfig.hasSupabase ? Supabase.instance.client : null,
   );
 });
 
