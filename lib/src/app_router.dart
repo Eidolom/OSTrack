@@ -9,6 +9,7 @@ import 'mascot_monetization.dart';
 import 'ostrack_catalog.dart';
 import 'ostrack_navigation_shell.dart';
 import 'onboarding/onboarding_flow.dart';
+import 'screens/scene_tag_moderation_screen.dart';
 import 'ostrack_widgets.dart';
 import 'widgets/offline_boundary.dart';
 
@@ -34,6 +35,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/store',
         builder: (context, state) => const _StoreRoutePage(),
+      ),
+      GoRoute(
+        path: '/moderation',
+        builder: (context, state) => const SceneTagModerationScreen(),
       ),
     ],
     redirect: (context, state) {

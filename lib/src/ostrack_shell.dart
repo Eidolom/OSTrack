@@ -11,6 +11,7 @@ import 'mascot_monetization.dart';
 import 'mascot_sprite.dart';
 import 'playback/original_audio_service.dart';
 import 'playback/playback_handoff_service.dart';
+import 'screens/scene_tag_moderation_screen.dart';
 import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
 import 'ostrack_widgets.dart';
@@ -2466,6 +2467,21 @@ class ProfileDashboard extends StatelessWidget {
               },
               icon: const Icon(Icons.settings_outlined),
               label: const Text('Open Settings'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SceneTagModerationScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.gavel_outlined),
+              label: const Text('Open Moderation Queue'),
             ),
           ),
           const SizedBox(height: 16),
