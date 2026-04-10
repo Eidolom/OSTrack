@@ -7,7 +7,7 @@ import 'app_providers.dart';
 import 'auth/auth_service.dart';
 import 'mascot_monetization.dart';
 import 'ostrack_catalog.dart';
-import 'ostrack_shell.dart';
+import 'ostrack_navigation_shell.dart';
 import 'onboarding/onboarding_flow.dart';
 import 'ostrack_widgets.dart';
 import 'widgets/offline_boundary.dart';
@@ -129,7 +129,7 @@ class _HomeRoutePage extends ConsumerWidget {
     final authController = ref.read(authControllerProvider.notifier);
 
     return OfflineBoundary(
-      child: OstrackShell(
+      child: OstrackNavigationShell(
         catalog: catalog,
         preferences: preferences,
         onPreferencesChanged: preferencesController.savePreferences,
