@@ -14,6 +14,7 @@ import 'playback/playback_handoff_service.dart';
 import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
 import 'ostrack_widgets.dart';
+import 'widgets/user_avatar_with_mascot.dart';
 
 class OstrackShell extends ConsumerStatefulWidget {
   const OstrackShell({
@@ -60,7 +61,17 @@ class _OstrackShellState extends ConsumerState<OstrackShell> {
           IndexedStack(
             index: _currentIndex,
             children: [
-              TickerMode(enabled: _currentIndex == 0, child: HomeDashboard(catalog: widget.catalog)),
+              TickerMode(
+                enabled: _currentIndex == 0,
+                child: HomeDashboard(
+                  catalog: widget.catalog,
+                  onOpenProfile: () {
+                    setState(() {
+                      _currentIndex = 3;
+                    });
+                  },
+                ),
+              ),
               TickerMode(
                 enabled: _currentIndex == 1,
                 child: ExploreDashboard(onOpenMediaSource: _openMediaSource),
@@ -295,9 +306,14 @@ class SectionHeader extends StatelessWidget {
 }
 
 class HomeDashboard extends ConsumerWidget {
-  const HomeDashboard({super.key, required this.catalog});
+  const HomeDashboard({
+    super.key,
+    required this.catalog,
+    required this.onOpenProfile,
+  });
 
   final OstrackCatalog catalog;
+  final VoidCallback onOpenProfile;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -311,6 +327,22 @@ class HomeDashboard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.notifications_none),
+                tooltip: 'Notifications',
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onOpenProfile,
+                child: const UserAvatarWithMascot(avatarRadius: 18),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           const _OnThisDayFeatureCard(),
           const SizedBox(height: 24),
           const SectionHeader(
