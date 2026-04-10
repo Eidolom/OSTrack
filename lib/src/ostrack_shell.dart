@@ -539,7 +539,7 @@ class _FeedCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _FeedAvatar(username: _username, accent: accent),
+              const _FeedAvatar(),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -589,31 +589,11 @@ class _FeedCard extends StatelessWidget {
 }
 
 class _FeedAvatar extends StatelessWidget {
-  const _FeedAvatar({required this.username, required this.accent});
-
-  final String username;
-  final Color accent;
+  const _FeedAvatar();
 
   @override
   Widget build(BuildContext context) {
-    final initials = username.replaceAll('@', '').substring(0, username.length > 2 ? 2 : 1).toUpperCase();
-
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: accent.withValues(alpha: 0.8), width: 1.2),
-        color: accent.withValues(alpha: 0.18),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        initials,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: OstrackColors.textHigh,
-            ),
-      ),
-    );
+    return const UserAvatarWithMascot(avatarRadius: 19);
   }
 }
 

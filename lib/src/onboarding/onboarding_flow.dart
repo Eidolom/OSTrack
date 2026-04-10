@@ -5,6 +5,7 @@ import '../auth/auth_service.dart';
 import '../ostrack_catalog.dart';
 import '../ostrack_theme.dart';
 import '../ostrack_widgets.dart';
+import '../widgets/user_avatar_with_mascot.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
@@ -565,11 +566,7 @@ class _SuggestionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            const CircleAvatar(
-              radius: 22,
-              backgroundColor: OstrackColors.teal,
-              child: Icon(Icons.person, color: Colors.black),
-            ),
+            const UserAvatarWithMascot(avatarRadius: 22),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
