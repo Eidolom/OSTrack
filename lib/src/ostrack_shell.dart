@@ -199,9 +199,10 @@ class _MiniPlayerBar extends ConsumerWidget {
           onTap: onExpand,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Ink(
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Ink(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 decoration: BoxDecoration(
                   color: OstrackColors.backgroundAlt.withValues(alpha: 0.62),
@@ -294,7 +295,7 @@ class _MiniPlayerBar extends ConsumerWidget {
                                 sourceTitle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Colors.white.withValues(alpha: 0.6),
                                     ),
                               ),
@@ -315,6 +316,7 @@ class _MiniPlayerBar extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -923,8 +925,16 @@ class ExploreDashboard extends ConsumerWidget {
                       ListTile(
                         tileColor: OstrackColors.surfaceAlt,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        title: Text(results[i].title),
-                        subtitle: Text('${results[i].source} · Alias: ${results[i].alias}'),
+                        title: Text(
+                          results[i].title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${results[i].source} · ${results[i].alias}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => onOpenMediaSource(results[i].source),
                       ),
@@ -1176,9 +1186,19 @@ class _TrendingOstTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 4),
-                    Text(meta, style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      meta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -1240,9 +1260,19 @@ class _HiddenGemCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24)),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24),
+            ),
             const SizedBox(height: 10),
-            Text(blurb, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35)),
+            Text(
+              blurb,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
+            ),
           ],
         ),
       ),
@@ -1395,7 +1425,12 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
                         child: Text(track.number.toString().padLeft(2, '0'), style: Theme.of(context).textTheme.labelMedium),
                       ),
                       Expanded(
-                        child: Text(track.title, style: Theme.of(context).textTheme.titleMedium),
+                        child: Text(
+                          track.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                       ),
                       Text(track.duration, style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(width: 8),
@@ -2345,14 +2380,54 @@ class _PlayerDashboardState extends ConsumerState<PlayerDashboard> {
                               size: 96,
                             ),
                           ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(12, 28, 12, 12),
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(
+                                  bottom: Radius.circular(16),
+                                ),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.82),
+                                  ],
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _activeTrack.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${_activeTrack.composer} · 2022 · Game',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                          color: Colors.white.withValues(alpha: 0.6),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(_activeTrack.title, style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 6),
-                  Text(_activeTrack.composer, style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 14),
                   Container(
                     width: double.infinity,
