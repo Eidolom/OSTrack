@@ -6,10 +6,12 @@ import 'package:isar/isar.dart';
 import 'app_preferences.dart';
 import 'auth/auth_service.dart';
 import 'backend/backend_config.dart';
+import 'backend/mascot_repository.dart';
 import 'backend/media_repository.dart';
 import 'backend/shelf_repository.dart';
 import 'backend/cache_models.dart';
 import 'backend/local_cache/cache_models.dart';
+import 'mascot_monetization.dart';
 import 'ostrack_catalog.dart';
 import 'playback/original_audio_service.dart';
 import 'playback/playback_handoff_service.dart';
@@ -34,6 +36,36 @@ final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
     seedCatalog: ref.watch(catalogProvider),
     isar: ref.watch(isarProvider),
   );
+});
+
+final mascotRepositoryProvider = Provider<MascotRepository>((ref) {
+  return SupabaseMascotRepository(
+    client: BackendConfig.hasSupabase ? Supabase.instance.client : null,
+    seedCatalog: const OstrackMascotCatalog(),
+    preferencesStore: ref.watch(appPreferencesStoreProvider),
+  );
+});
+
+final mascotCatalogViewProvider = FutureProvider<MascotCatalogView>((ref) async {
+  final repo = ref.watch(mascotRepositoryProvider);
+  final mascots = await repo.fetchMascots();
+  final owned = await repo.fetchOwnedMascots();
+  final equippedId = await repo.fetchEquippedMascotId();
+
+  final ownedIds = owned.map((record) => record.mascotId).toSet().toList(growable: false);
+  final resolvedEquippedId = equippedId.isEmpty
+      ? (ownedIds.isNotEmpty ? ownedIds.first : AppPreferences.defaults.equippedMascotId)
+      : equippedId;
+
+  return MascotCatalogView(
+    mascots: mascots,
+    ownedMascotIds: ownedIds,
+    equippedMascotId: resolvedEquippedId,
+  );
+});
+
+final mascotControllerProvider = Provider<MascotController>((ref) {
+  return MascotController(ref);
 });
 
 final categoriesProvider = FutureProvider<List<CategoryEntry>>((ref) async {
@@ -73,6 +105,31 @@ final originalAudioServiceProvider = Provider<OriginalAudioService>((ref) {
 final originalPlayerStateProvider = StreamProvider<PlayerState>((ref) {
   return ref.watch(originalAudioServiceProvider).playerStateStream;
 });
+
+class MascotController {
+  MascotController(this.ref);
+
+  final Ref ref;
+
+  Future<void> equipMascot(String mascotId) async {
+    await ref.read(mascotRepositoryProvider).equipMascot(mascotId);
+    await ref.read(appPreferencesControllerProvider.notifier).updateWith(
+          (current) => current.copyWith(equippedMascotId: mascotId),
+        );
+    ref.invalidate(mascotCatalogViewProvider);
+  }
+
+  Future<void> purchaseMascot(String mascotId) async {
+    await ref.read(mascotRepositoryProvider).purchaseMascot(mascotId);
+
+    await ref.read(appPreferencesControllerProvider.notifier).updateWith((current) {
+      final owned = current.ownedMascotIds.toSet()..add(mascotId);
+      return current.copyWith(ownedMascotIds: owned.toList(growable: false));
+    });
+
+    ref.invalidate(mascotCatalogViewProvider);
+  }
+}
 
 // ============================================================================
 // SHELF & MUTATION PROVIDERS

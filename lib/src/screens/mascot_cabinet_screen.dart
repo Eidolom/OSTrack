@@ -15,13 +15,9 @@ class MascotCabinetScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Watch the user's preferences to get their owned/equipped mascots
-    final prefsAsync = ref.watch(appPreferencesControllerProvider);
+    final catalogAsync = ref.watch(mascotCatalogViewProvider);
 
-    // Full catalog of available mascots
-    final fullCatalog = OstrackMascotCatalog().mascots;
-
-    return prefsAsync.when(
+    return catalogAsync.when(
       loading: () => const Scaffold(
         backgroundColor: OstrackColors.background,
         body: Center(child: CircularProgressIndicator()),
@@ -32,9 +28,10 @@ class MascotCabinetScreen extends ConsumerWidget {
           child: Text('Error loading cabinet: $e'),
         ),
       ),
-      data: (prefs) {
-        final ownedIds = prefs.ownedMascotIds;
-        final equippedId = prefs.equippedMascotId;
+      data: (catalogView) {
+        final fullCatalog = catalogView.mascots;
+        final ownedIds = catalogView.ownedMascotIds;
+        final equippedId = catalogView.equippedMascotId;
 
         return Scaffold(
           backgroundColor: OstrackColors.background,
@@ -88,13 +85,11 @@ class MascotCabinetScreen extends ConsumerWidget {
                         onTap: () {
                           if (isOwned && !isEquipped) {
                             // Trigger Equip Action
-                              ref.read(appPreferencesControllerProvider.notifier)
-                                  .updateWith((current) => current.copyWith(equippedMascotId: mascot.id));
+                            ref.read(mascotControllerProvider).equipMascot(mascot.id);
                           } else if (!isOwned) {
                             // TODO: Open Store / Purchase Modal
-                            _showStoreModal(context, mascot);
+                            _showStoreModal(context, ref, mascot);
                           }
-
                         },
                       );
                     },
@@ -114,12 +109,11 @@ class MascotCabinetScreen extends ConsumerWidget {
     );
   }
 
-  void _showStoreModal(BuildContext context, MascotEntry mascot) {
-    // TODO: Scaffold out your bottom sheet for purchasing here
-    showBottomSheet(
+  void _showStoreModal(BuildContext context, WidgetRef ref, MascotEntry mascot) {
+    showModalBottomSheet<void>(
       context: context,
       builder: (context) => Container(
-        height: 200,
+        height: 230,
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -134,8 +128,16 @@ class MascotCabinetScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Browse Store'),
+              onPressed: () async {
+                await ref.read(mascotControllerProvider).purchaseMascot(mascot.id);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${mascot.name} added to your collection.')),
+                  );
+                }
+              },
+              child: Text('Add to Collection · ${mascot.priceLabel}'),
             ),
           ],
         ),
