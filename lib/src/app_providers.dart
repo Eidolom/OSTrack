@@ -135,16 +135,12 @@ class MascotController {
 // SHELF & MUTATION PROVIDERS
 // ============================================================================
 
-final isarProvider = Provider<Isar?>((ref) {
-  // This should be initialized in main() and set via provider override
-  return null;
+final isarProvider = Provider<Isar>((ref) {
+  throw StateError('Isar must be initialized in main() and overridden in ProviderScope.');
 });
 
 final shelfRepositoryProvider = Provider<ShelfRepository>((ref) {
   final isar = ref.watch(isarProvider);
-  if (isar == null) {
-    throw Exception('Isar not initialized');
-  }
 
   if (BackendConfig.hasSupabase) {
     return SupabaseShelfRepository(

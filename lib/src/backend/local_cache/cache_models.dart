@@ -20,16 +20,3 @@ class CachedFeedStory {
   late DateTime createdAt;
 }
 
-// ============================================================================
-// PENDING MUTATION
-// ============================================================================
-
-@collection
-class PendingMutation {
-  Id id = Isar.autoIncrement;
-
-  late String mutationType; // e.g., 'ADD_TO_SHELF', 'TAG_SCENE'
-  late String payloadJson;
-  late int retryCount;
-  late DateTime createdAt;
-}
