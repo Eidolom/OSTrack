@@ -17,23 +17,29 @@ class OfflineBoundary extends StatelessWidget {
         return Stack(
           children: [
             child,
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              top: isOffline ? 0 : -50,
+            Positioned(
+              top: 0,
               left: 0,
               right: 0,
-              child: SafeArea(
-                child: Material(
-                  color: OstrackColors.coral.withAlpha((0.9 * 255).toInt()),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Text(
-                      'Offline mode. Browsing local cache.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+              child: IgnorePointer(
+                ignoring: !isOffline,
+                child: AnimatedSlide(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  offset: isOffline ? Offset.zero : const Offset(0, -1),
+                  child: SafeArea(
+                    child: Material(
+                      color: OstrackColors.coral.withValues(alpha: 0.9),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          'Offline mode. Browsing local cache.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
