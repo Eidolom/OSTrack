@@ -302,7 +302,7 @@ class _WorldSelectionStep extends StatelessWidget {
                   (category) => FilterChip(
                     label: Text(category.label),
                     selected: selectedWorlds.contains(category.label),
-                    selectedColor: category.accent.withOpacity(0.22),
+                    selectedColor: category.accent.withValues(alpha: 0.22),
                     onSelected: (_) => onToggleWorld(category.label),
                   ),
                 )
@@ -520,8 +520,8 @@ class _AuthOption extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  OstrackColors.teal.withOpacity(0.24),
-                  OstrackColors.surface.withOpacity(0.95),
+                  OstrackColors.teal.withValues(alpha: 0.24),
+                  OstrackColors.surface.withValues(alpha: 0.95),
                 ],
               )
             : null,
@@ -616,7 +616,7 @@ class _FeedStoryCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.14),
+              color: accent.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: accent),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_preferences.dart';
+import '../mascot_monetization.dart';
 import '../ostrack_theme.dart';
 import '../ostrack_widgets.dart';
 
@@ -9,10 +10,12 @@ class SettingsScreen extends StatefulWidget {
     super.key,
     required this.preferences,
     required this.onPreferencesChanged,
+    required this.mascotCatalog,
   });
 
   final AppPreferences preferences;
   final PreferencesUpdater onPreferencesChanged;
+  final OstrackMascotCatalog mascotCatalog;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -131,6 +134,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 )
                               : const Icon(Icons.save_outlined),
                           label: const Text('Save platform'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OstrackCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Collection', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Manage your mascot cabinet and open the store from the account area.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 20),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => MascotStorePage(
+                                  catalog: widget.mascotCatalog.viewFor(widget.preferences),
+                                  preferences: widget.preferences,
+                                  onPreferencesChanged: widget.onPreferencesChanged,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.storefront_outlined),
+                          label: const Text('Open mascot store'),
                         ),
                       ],
                     ),

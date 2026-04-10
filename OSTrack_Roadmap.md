@@ -55,6 +55,10 @@
 - 2026-04-09 — UI/UX Step 5 Profile pass completed: added collector identity hero, dedicated collector stats sheet, and horizontal shelf showcase tiles with richer visual treatment.
 - 2026-04-09 — UI/UX Step 6 Player pass completed: redesigned player into an artwork-dominant card with quote-styled scene context and clearer primary/secondary action hierarchy.
 - 2026-04-09 — UI/UX Step 7 micro-interaction pass started: added staggered reveal animations for Home feed cards to make feed entry feel more alive.
+- 2026-04-09 — UI/UX Step 8 structure pass completed: replaced 5-tab nav with a 4-tab layout plus persistent mini-player context bar, and added a first fully navigable Media Source page (hero, rating distribution, tracklist expansion, scene tags, and forum tabs) wired from Explore tiles.
+- 2026-04-09 — UI/UX Step 9 interaction pass completed: added player ambient color transitions when switching related tracks and implemented a tactile half-star rating widget with staggered fill, haptic pulses, and a brief completion burst.
+- 2026-04-09 — UI/UX Step 9 polish follow-up: removed deprecated `withOpacity` usages across onboarding and shell UI surfaces; analyzer now reports zero issues.
+- 2026-04-10 — Implemented the mascot monetization foundation: added persisted mascot ownership/equip state, a public Profile collection cabinet, and a mascot store with house, partnership, community, and founding catalog entries, purchase/equip actions, and settings/profile entry points.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 
