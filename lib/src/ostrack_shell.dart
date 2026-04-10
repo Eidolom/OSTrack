@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart';
 
 import 'app_providers.dart';
 import 'app_preferences.dart';
+import 'backend/backend_config.dart';
 import 'ostrack_catalog.dart';
 import 'mascot_monetization.dart';
 import 'mascot_sprite.dart';
+import 'playback/original_audio_service.dart';
+import 'playback/playback_handoff_service.dart';
 import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
 import 'ostrack_widgets.dart';
@@ -36,7 +40,10 @@ class _OstrackShellState extends ConsumerState<OstrackShell> {
   void _openMediaSource(String title) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => MediaSourcePage(title: title),
+        builder: (_) => MediaSourcePage(
+          title: title,
+          selectedPlatform: widget.preferences.selectedPlatform,
+        ),
       ),
     );
   }
@@ -287,13 +294,13 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-class HomeDashboard extends StatelessWidget {
+class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key, required this.catalog});
 
   final OstrackCatalog catalog;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final feed = catalog.homeFeed;
     final recommendations = catalog.recommendations;
 
@@ -339,6 +346,12 @@ class HomeDashboard extends StatelessWidget {
                   ),
                 )
                 .toList(),
+          ),
+          const SizedBox(height: 24),
+          _OriginalsPlaybackCard(
+            isConfigured: BackendConfig.hasOriginalsR2,
+            service: ref.watch(originalAudioServiceProvider),
+            playerState: ref.watch(originalPlayerStateProvider).valueOrNull,
           ),
         ],
       ),
@@ -615,6 +628,139 @@ class _RecommendationCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _OriginalsPlaybackCard extends StatelessWidget {
+  const _OriginalsPlaybackCard({
+    required this.isConfigured,
+    required this.service,
+    required this.playerState,
+  });
+
+  final bool isConfigured;
+  final OriginalAudioService service;
+  final PlayerState? playerState;
+
+  static const _tracks = <_OriginalTrackPreview>[
+    _OriginalTrackPreview(
+      title: 'Neon Drift (OSTrack Original)',
+      fileName: 'neon_drift.mp3',
+      blurb: 'A low-glow synth loop designed for late-night shelf sessions.',
+    ),
+    _OriginalTrackPreview(
+      title: 'Silent Arc (OSTrack Original)',
+      fileName: 'silent_arc.mp3',
+      blurb: 'Minimal piano texture for scene-tag writing and focus.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isPlaying = playerState?.playing ?? false;
+
+    return OstrackCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            title: 'OSTrack Originals',
+            subtitle: 'Stream direct from Cloudflare R2 with in-app playback.',
+          ),
+          if (!isConfigured)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text('Set ORIGINALS_R2_BASE_URL via --dart-define to enable streaming.'),
+            ),
+          for (var i = 0; i < _tracks.length; i++) ...[
+            _OriginalTrackTile(
+              track: _tracks[i],
+              isConfigured: isConfigured,
+              isPlaying: isPlaying,
+              onPlay: () async {
+                final base = BackendConfig.originalsR2BaseUrl;
+                final url = '$base/${_tracks[i].fileName}';
+                await service.playUrl(url);
+              },
+              onStop: service.stop,
+            ),
+            if (i < _tracks.length - 1) const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _OriginalTrackTile extends StatelessWidget {
+  const _OriginalTrackTile({
+    required this.track,
+    required this.isConfigured,
+    required this.isPlaying,
+    required this.onPlay,
+    required this.onStop,
+  });
+
+  final _OriginalTrackPreview track;
+  final bool isConfigured;
+  final bool isPlaying;
+  final Future<void> Function() onPlay;
+  final Future<void> Function() onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: OstrackColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(track.title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(track.blurb, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: !isConfigured
+                    ? null
+                    : () async {
+                        await onPlay();
+                      },
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Play Original'),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: !isPlaying
+                    ? null
+                    : () async {
+                        await onStop();
+                      },
+                icon: const Icon(Icons.stop),
+                label: const Text('Stop'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OriginalTrackPreview {
+  const _OriginalTrackPreview({
+    required this.title,
+    required this.fileName,
+    required this.blurb,
+  });
+
+  final String title;
+  final String fileName;
+  final String blurb;
 }
 
 class ExploreDashboard extends ConsumerWidget {
@@ -999,16 +1145,21 @@ class _HiddenGemCard extends StatelessWidget {
   }
 }
 
-class MediaSourcePage extends StatefulWidget {
-  const MediaSourcePage({super.key, required this.title});
+class MediaSourcePage extends ConsumerStatefulWidget {
+  const MediaSourcePage({
+    super.key,
+    required this.title,
+    required this.selectedPlatform,
+  });
 
   final String title;
+  final String selectedPlatform;
 
   @override
-  State<MediaSourcePage> createState() => _MediaSourcePageState();
+  ConsumerState<MediaSourcePage> createState() => _MediaSourcePageState();
 }
 
-class _MediaSourcePageState extends State<MediaSourcePage> {
+class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
   static const _tracks = <_MediaTrackEntry>[
     _MediaTrackEntry(number: 1, title: 'The Lands Between', duration: '3:54', sceneHint: 'Main menu overture', verified: true),
     _MediaTrackEntry(number: 2, title: 'Limgrave', duration: '4:12', sceneHint: 'First open-world ascent', verified: true),
@@ -1022,6 +1173,20 @@ class _MediaSourcePageState extends State<MediaSourcePage> {
   ];
 
   final Set<int> _expandedTrackNumbers = <int>{};
+
+  Future<void> _launchTrack(String title) async {
+    final request = TrackHandoffIndex.forTitle(title);
+    final launched = await ref.read(playbackHandoffServiceProvider).launch(
+          selectedPlatform: widget.selectedPlatform,
+          request: request,
+        );
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open ${widget.selectedPlatform} for "$title".')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1137,7 +1302,13 @@ class _MediaSourcePageState extends State<MediaSourcePage> {
                           const SizedBox(width: 6),
                           Text(track.verified ? 'Verified timestamp' : 'Needs timestamp bounty', style: Theme.of(context).textTheme.labelMedium),
                           const Spacer(),
-                          TextButton.icon(onPressed: () {}, icon: const Icon(Icons.play_arrow), label: const Text('Play')),
+                          TextButton.icon(
+                            onPressed: () {
+                              _launchTrack(track.title);
+                            },
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Play'),
+                          ),
                         ],
                       ),
                     ],
@@ -1779,7 +1950,7 @@ class _HistoryTimelineRow extends StatelessWidget {
   }
 }
 
-class PlayerDashboard extends StatefulWidget {
+class PlayerDashboard extends ConsumerStatefulWidget {
   const PlayerDashboard({
     super.key,
     required this.catalog,
@@ -1792,10 +1963,10 @@ class PlayerDashboard extends StatefulWidget {
   final ActiveTrackEntry initialTrack;
 
   @override
-  State<PlayerDashboard> createState() => _PlayerDashboardState();
+  ConsumerState<PlayerDashboard> createState() => _PlayerDashboardState();
 }
 
-class _PlayerDashboardState extends State<PlayerDashboard> {
+class _PlayerDashboardState extends ConsumerState<PlayerDashboard> {
   late ActiveTrackEntry _activeTrack;
   late Color _ambientAccent;
   double _rating = 4;
@@ -1818,6 +1989,20 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
         sceneTag: 'Verified scene tag',
       );
     });
+  }
+
+  Future<void> _launchCurrentTrack() async {
+    final request = TrackHandoffIndex.forTitle(_activeTrack.title);
+    final launched = await ref.read(playbackHandoffServiceProvider).launch(
+          selectedPlatform: widget.selectedPlatform,
+          request: request,
+        );
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open ${widget.selectedPlatform} for "${_activeTrack.title}".')),
+      );
+    }
   }
 
   @override
@@ -1923,9 +2108,9 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: () {},
+                      onPressed: _launchCurrentTrack,
                       icon: const Icon(Icons.play_arrow),
-                      label: const Text('Open in Spotify'),
+                      label: Text('Open in ${widget.selectedPlatform}'),
                     ),
                   ),
                   const SizedBox(height: 10),

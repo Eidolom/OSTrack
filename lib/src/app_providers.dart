@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:just_audio/just_audio.dart';
 
 import 'app_preferences.dart';
 import 'auth/auth_service.dart';
 import 'backend/backend_config.dart';
 import 'backend/media_repository.dart';
 import 'ostrack_catalog.dart';
+import 'playback/original_audio_service.dart';
+import 'playback/playback_handoff_service.dart';
 
 final catalogProvider = Provider<OstrackCatalog>((ref) => const OstrackCatalog());
 
@@ -48,6 +51,22 @@ final exploreSearchResultsProvider = FutureProvider<List<MediaSearchResult>>((re
     return const [];
   }
   return ref.watch(mediaRepositoryProvider).searchTracks(query);
+});
+
+final playbackHandoffServiceProvider = Provider<PlaybackHandoffService>((ref) {
+  return PlaybackHandoffService();
+});
+
+final originalAudioServiceProvider = Provider<OriginalAudioService>((ref) {
+  final service = OriginalAudioService();
+  ref.onDispose(() {
+    service.dispose();
+  });
+  return service;
+});
+
+final originalPlayerStateProvider = StreamProvider<PlayerState>((ref) {
+  return ref.watch(originalAudioServiceProvider).playerStateStream;
 });
 
 class AppPreferencesController extends AsyncNotifier<AppPreferences> {

@@ -7,8 +7,11 @@ class BackendConfig {
   static const typesenseProtocol = String.fromEnvironment('TYPESENSE_PROTOCOL', defaultValue: 'https');
   static const typesenseSearchApiKey = String.fromEnvironment('TYPESENSE_SEARCH_API_KEY');
   static const typesenseConnectionTimeoutMs = int.fromEnvironment('TYPESENSE_CONNECTION_TIMEOUT_MS', defaultValue: 8000);
+  static const originalsR2BaseUrl = String.fromEnvironment('ORIGINALS_R2_BASE_URL');
 
   static bool get hasSupabase => supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
   static bool get hasTypesense => typesenseHost.isNotEmpty && typesenseSearchApiKey.isNotEmpty;
+
+  static bool get hasOriginalsR2 => originalsR2BaseUrl.isNotEmpty;
 }
