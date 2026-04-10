@@ -1,23 +1,32 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:ostrack_app/src/app_preferences.dart';
 import 'package:ostrack_app/src/auth/auth_service.dart';
-import 'package:ostrack_app/src/ostrack_app.dart';
+import 'package:ostrack_app/src/onboarding/onboarding_flow.dart';
+import 'package:ostrack_app/src/ostrack_catalog.dart';
+import 'package:ostrack_app/src/ostrack_shell.dart';
 
-class _FakeAuthService extends AuthService {
-  const _FakeAuthService();
-
-  @override
-  Future<AuthSession> signIn(AuthProvider provider) async {
-    return AuthSession(provider: provider, displayName: 'Test User', email: 'test@ostrack.dev');
-  }
+Future<AuthSession> _fakeSignIn(AuthProvider provider) async {
+  return AuthSession(provider: provider, displayName: 'Test User', email: 'test@ostrack.dev');
 }
 
 void main() {
   testWidgets('completes onboarding and opens the OSTrack shell', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
+    var completedPreferences = AppPreferences.defaults;
 
-    await tester.pumpWidget(const OstrackApp(authService: _FakeAuthService()));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OnboardingFlow(
+          catalog: const OstrackCatalog(),
+          initialPreferences: AppPreferences.defaults,
+          onSignIn: _fakeSignIn,
+          onComplete: (updated) {
+            completedPreferences = updated;
+          },
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Create your account'), findsOneWidget);
@@ -31,18 +40,20 @@ void main() {
     await tester.tap(find.text('Enter OSTrack'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Your soundtrack pulse'), findsOneWidget);
+    expect(completedPreferences.onboardingCompleted, isTrue);
   });
 
-  testWidgets('skips onboarding when preferences already exist', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({
-      'onboarding_completed': true,
-      'selected_platform': 'Apple Music',
-      'selected_worlds': ['Anime', 'Composers', 'Video Games', 'Movies & TV', 'K-Drama'],
-      'followed_users': ['melodyarchive'],
-    });
-
-    await tester.pumpWidget(const OstrackApp(authService: _FakeAuthService()));
+  testWidgets('shows the OSTrack shell when onboarding is complete', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OstrackShell(
+          catalog: const OstrackCatalog(),
+          preferences: AppPreferences.defaults.copyWith(onboardingCompleted: true),
+          onPreferencesChanged: (_) async {},
+          onSignOut: () {},
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Your soundtrack pulse'), findsOneWidget);

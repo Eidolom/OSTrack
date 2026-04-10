@@ -11,13 +11,13 @@ class OnboardingFlow extends StatefulWidget {
     super.key,
     required this.catalog,
     required this.initialPreferences,
-    required this.authService,
+    required this.onSignIn,
     required this.onComplete,
   });
 
   final OstrackCatalog catalog;
   final AppPreferences initialPreferences;
-  final AuthService authService;
+  final Future<AuthSession> Function(AuthProvider provider) onSignIn;
   final ValueChanged<AppPreferences> onComplete;
 
   @override
@@ -67,7 +67,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final session = await widget.authService.signIn(_selectedAuthProvider);
+      final session = await widget.onSignIn(_selectedAuthProvider);
       if (!mounted) {
         return;
       }

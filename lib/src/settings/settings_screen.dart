@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../app_preferences.dart';
 import '../mascot_monetization.dart';
@@ -11,11 +12,13 @@ class SettingsScreen extends StatefulWidget {
     required this.preferences,
     required this.onPreferencesChanged,
     required this.mascotCatalog,
+    required this.onSignOut,
   });
 
   final AppPreferences preferences;
   final PreferencesUpdater onPreferencesChanged;
   final OstrackMascotCatalog mascotCatalog;
+  final VoidCallback onSignOut;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -152,18 +155,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(height: 20),
                         OutlinedButton.icon(
                           onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => MascotStorePage(
-                                  catalog: widget.mascotCatalog.viewFor(widget.preferences),
-                                  preferences: widget.preferences,
-                                  onPreferencesChanged: widget.onPreferencesChanged,
-                                ),
-                              ),
-                            );
+                            context.go('/store');
                           },
                           icon: const Icon(Icons.storefront_outlined),
                           label: const Text('Open mascot store'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OstrackCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Account', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Clear your session and return to onboarding.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 20),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            widget.onSignOut();
+                            context.go('/onboarding');
+                          },
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Sign out'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: OstrackColors.coral,
+                            side: const BorderSide(color: OstrackColors.coral),
+                          ),
                         ),
                       ],
                     ),

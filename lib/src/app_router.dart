@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'app_preferences.dart';
+import 'app_providers.dart';
+import 'mascot_monetization.dart';
+import 'ostrack_catalog.dart';
+import 'ostrack_shell.dart';
+import 'onboarding/onboarding_flow.dart';
+import 'ostrack_widgets.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final preferences = ref.watch(appPreferencesControllerProvider);
+  final catalog = ref.watch(catalogProvider);
+
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const _BootstrapPage(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => _OnboardingRoutePage(catalog: catalog),
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => _HomeRoutePage(catalog: catalog),
+      ),
+      GoRoute(
+        path: '/store',
+        builder: (context, state) => const _StoreRoutePage(),
+      ),
+    ],
+    redirect: (context, state) {
+      final path = state.matchedLocation;
+      final preferenceValue = preferences.valueOrNull;
+
+      if (preferences.isLoading || preferences.hasError) {
+        return path == '/' ? null : '/';
+      }
+
+      final onboardingCompleted = preferenceValue?.onboardingCompleted ?? false;
+      if (path == '/') {
+        return onboardingCompleted ? '/home' : '/onboarding';
+      }
+      if (!onboardingCompleted && path != '/onboarding' && path != '/') {
+        return '/onboarding';
+      }
+      if (onboardingCompleted && path == '/onboarding') {
+        return '/home';
+      }
+      return null;
+    },
+  );
+
+  ref.onDispose(router.dispose);
+  return router;
+});
+
+class _BootstrapPage extends StatelessWidget {
+  const _BootstrapPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Stack(
+        children: [
+          OstrackBackdrop(),
+          Center(child: CircularProgressIndicator()),
+        ],
+      ),
+    );
+  }
+}
+
+class _OnboardingRoutePage extends ConsumerWidget {
+  const _OnboardingRoutePage({required this.catalog});
+
+  final OstrackCatalog catalog;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preferences = ref.watch(appPreferencesControllerProvider).valueOrNull ?? AppPreferences.defaults;
+    final authController = ref.read(authControllerProvider.notifier);
+    final preferencesController = ref.read(appPreferencesControllerProvider.notifier);
+
+    return OnboardingFlow(
+      catalog: catalog,
+      initialPreferences: preferences,
+      onSignIn: authController.signIn,
+      onComplete: preferencesController.savePreferences,
+    );
+  }
+}
+
+class _HomeRoutePage extends ConsumerWidget {
+  const _HomeRoutePage({required this.catalog});
+
+  final OstrackCatalog catalog;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preferences = ref.watch(appPreferencesControllerProvider).valueOrNull ?? AppPreferences.defaults;
+    final preferencesController = ref.read(appPreferencesControllerProvider.notifier);
+    final authController = ref.read(authControllerProvider.notifier);
+
+    return OstrackShell(
+      catalog: catalog,
+      preferences: preferences,
+      onPreferencesChanged: preferencesController.savePreferences,
+      onSignOut: () {
+        authController.signOut();
+        preferencesController.setOnboardingCompleted(false);
+      },
+    );
+  }
+}
+
+class _StoreRoutePage extends ConsumerWidget {
+  const _StoreRoutePage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preferences = ref.watch(appPreferencesControllerProvider).valueOrNull ?? AppPreferences.defaults;
+    final preferencesController = ref.read(appPreferencesControllerProvider.notifier);
+    final mascotCatalog = const OstrackMascotCatalog();
+
+    return MascotStorePage(
+      catalog: mascotCatalog.viewFor(preferences),
+      preferences: preferences,
+      onPreferencesChanged: preferencesController.savePreferences,
+    );
+  }
+}

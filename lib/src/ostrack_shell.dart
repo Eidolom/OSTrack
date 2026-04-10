@@ -15,11 +15,13 @@ class OstrackShell extends StatefulWidget {
     required this.catalog,
     required this.preferences,
     required this.onPreferencesChanged,
+    required this.onSignOut,
   });
 
   final OstrackCatalog catalog;
   final AppPreferences preferences;
   final PreferencesUpdater onPreferencesChanged;
+  final VoidCallback onSignOut;
 
   @override
   State<OstrackShell> createState() => _OstrackShellState();
@@ -59,6 +61,7 @@ class _OstrackShellState extends State<OstrackShell> {
                   catalog: widget.catalog,
                   preferences: widget.preferences,
                   onPreferencesChanged: widget.onPreferencesChanged,
+                  onSignOut: widget.onSignOut,
                   mascotCatalog: const OstrackMascotCatalog(),
                 ),
               ),
@@ -2156,12 +2159,14 @@ class ProfileDashboard extends StatelessWidget {
     required this.catalog,
     required this.preferences,
     required this.onPreferencesChanged,
+    required this.onSignOut,
     required this.mascotCatalog,
   });
 
   final OstrackCatalog catalog;
   final AppPreferences preferences;
   final PreferencesUpdater onPreferencesChanged;
+  final VoidCallback onSignOut;
   final OstrackMascotCatalog mascotCatalog;
 
   @override
@@ -2187,6 +2192,7 @@ class ProfileDashboard extends StatelessWidget {
                       preferences: preferences,
                       onPreferencesChanged: onPreferencesChanged,
                       mascotCatalog: mascotCatalog,
+                      onSignOut: onSignOut,
                     ),
                   ),
                 );
