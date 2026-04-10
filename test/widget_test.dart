@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ostrack_app/src/app_preferences.dart';
@@ -45,12 +46,14 @@ void main() {
 
   testWidgets('shows the OSTrack shell when onboarding is complete', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: OstrackShell(
-          catalog: const OstrackCatalog(),
-          preferences: AppPreferences.defaults.copyWith(onboardingCompleted: true),
-          onPreferencesChanged: (_) async {},
-          onSignOut: () {},
+      ProviderScope(
+        child: MaterialApp(
+          home: OstrackShell(
+            catalog: const OstrackCatalog(),
+            preferences: AppPreferences.defaults.copyWith(onboardingCompleted: true),
+            onPreferencesChanged: (_) async {},
+            onSignOut: () {},
+          ),
         ),
       ),
     );

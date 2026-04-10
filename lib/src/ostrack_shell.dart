@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'app_providers.dart';
 import 'app_preferences.dart';
 import 'ostrack_catalog.dart';
 import 'mascot_monetization.dart';
@@ -9,7 +11,7 @@ import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
 import 'ostrack_widgets.dart';
 
-class OstrackShell extends StatefulWidget {
+class OstrackShell extends ConsumerStatefulWidget {
   const OstrackShell({
     super.key,
     required this.catalog,
@@ -24,10 +26,10 @@ class OstrackShell extends StatefulWidget {
   final VoidCallback onSignOut;
 
   @override
-  State<OstrackShell> createState() => _OstrackShellState();
+  ConsumerState<OstrackShell> createState() => _OstrackShellState();
 }
 
-class _OstrackShellState extends State<OstrackShell> {
+class _OstrackShellState extends ConsumerState<OstrackShell> {
   int _currentIndex = 0;
   bool _isPlayerExpanded = false;
 
@@ -41,6 +43,8 @@ class _OstrackShellState extends State<OstrackShell> {
 
   @override
   Widget build(BuildContext context) {
+    final activeTrack = ref.watch(activeTrackProvider).valueOrNull ?? widget.catalog.activeTrack;
+
     return Scaffold(
       extendBody: true,
       body: Stack(
@@ -52,7 +56,7 @@ class _OstrackShellState extends State<OstrackShell> {
               TickerMode(enabled: _currentIndex == 0, child: HomeDashboard(catalog: widget.catalog)),
               TickerMode(
                 enabled: _currentIndex == 1,
-                child: ExploreDashboard(catalog: widget.catalog, onOpenMediaSource: _openMediaSource),
+                child: ExploreDashboard(onOpenMediaSource: _openMediaSource),
               ),
               TickerMode(enabled: _currentIndex == 2, child: LibraryDashboard(catalog: widget.catalog)),
               TickerMode(
@@ -76,6 +80,7 @@ class _OstrackShellState extends State<OstrackShell> {
                     PlayerDashboard(
                       catalog: widget.catalog,
                       selectedPlatform: widget.preferences.selectedPlatform,
+                      initialTrack: activeTrack,
                     ),
                     Positioned(
                       top: 18,
@@ -100,8 +105,8 @@ class _OstrackShellState extends State<OstrackShell> {
         children: [
           if (!_isPlayerExpanded)
             _MiniPlayerBar(
-              trackTitle: widget.catalog.activeTrack.title,
-              sourceTitle: widget.catalog.activeTrack.source,
+              trackTitle: activeTrack.title,
+              sourceTitle: activeTrack.source,
               onExpand: () {
                 setState(() {
                   _isPlayerExpanded = true;
@@ -612,45 +617,101 @@ class _RecommendationCard extends StatelessWidget {
   }
 }
 
-class ExploreDashboard extends StatelessWidget {
+class ExploreDashboard extends ConsumerWidget {
   const ExploreDashboard({
     super.key,
-    required this.catalog,
     required this.onOpenMediaSource,
   });
 
-  final OstrackCatalog catalog;
   final ValueChanged<String> onOpenMediaSource;
 
   @override
-  Widget build(BuildContext context) {
-    final categories = catalog.categories;
-    final trends = catalog.trends;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final trendsAsync = ref.watch(trendsProvider);
+    final query = ref.watch(exploreSearchQueryProvider);
+    final searchResultsAsync = ref.watch(exploreSearchResultsProvider);
 
     return OstrackPageFrame(
       eyebrow: 'Explore',
       title: 'Browse worlds, not just songs',
-      subtitle: 'No global search bar on the landing screen. Entry is visual and intentional.',
+      subtitle: 'Search now routes through Typesense aliases with curated visual discovery below.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          TextField(
+            onChanged: (value) => ref.read(exploreSearchQueryProvider.notifier).state = value,
+            decoration: InputDecoration(
+              hintText: 'Search tracks, aliases, sources, composers',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: query.trim().isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Clear search',
+                      onPressed: () => ref.read(exploreSearchQueryProvider.notifier).state = '',
+                      icon: const Icon(Icons.close),
+                    ),
+            ),
+          ),
+          if (query.trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const SectionHeader(
+              title: 'Search results',
+              subtitle: 'Alias-aware matches from the backend search index.',
+            ),
+            searchResultsAsync.when(
+              data: (results) {
+                if (results.isEmpty) {
+                  return const OstrackCard(
+                    child: Text('No matches found. Try a different title, alias, or source.'),
+                  );
+                }
+                return Column(
+                  children: [
+                    for (var i = 0; i < results.length; i++) ...[
+                      ListTile(
+                        tileColor: OstrackColors.surfaceAlt,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        title: Text(results[i].title),
+                        subtitle: Text('${results[i].source} · Alias: ${results[i].alias}'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => onOpenMediaSource(results[i].source),
+                      ),
+                      if (i < results.length - 1) const SizedBox(height: 8),
+                    ],
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => const OstrackCard(
+                child: Text('Search is temporarily unavailable. Falling back to local matches.'),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           LayoutBuilder(
             builder: (context, constraints) {
               final tileWidth = (constraints.maxWidth - 12) / 2;
 
-              return Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: categories
-                    .map(
-                      (item) => _CategoryTile(
-                        label: item.label,
-                        accent: item.accent,
-                        width: tileWidth,
-                        onTap: () => onOpenMediaSource(_featuredTitleForCategory(item.label)),
-                      ),
-                    )
-                    .toList(),
+              return categoriesAsync.when(
+                data: (categories) => Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: categories
+                      .map(
+                        (item) => _CategoryTile(
+                          label: item.label,
+                          accent: item.accent,
+                          width: tileWidth,
+                          onTap: () => onOpenMediaSource(_featuredTitleForCategory(item.label)),
+                        ),
+                      )
+                      .toList(),
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => const OstrackCard(
+                  child: Text('Categories are loading from backup data right now.'),
+                ),
               );
             },
           ),
@@ -661,18 +722,24 @@ class ExploreDashboard extends StatelessWidget {
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final item in trends) ...[
-                  _TrendingOstTile(
-                    label: item.label,
-                    meta: item.meta,
-                    accent: item.accent,
-                    onTap: () => onOpenMediaSource(item.label),
-                  ),
-                  if (item != trends.last) const SizedBox(width: 12),
+            child: trendsAsync.when(
+              data: (trends) => Row(
+                children: [
+                  for (final item in trends) ...[
+                    _TrendingOstTile(
+                      label: item.label,
+                      meta: item.meta,
+                      accent: item.accent,
+                      onTap: () => onOpenMediaSource(item.label),
+                    ),
+                    if (item != trends.last) const SizedBox(width: 12),
+                  ],
                 ],
-              ],
+              ),
+              loading: () => const SizedBox(height: 90, child: Center(child: CircularProgressIndicator())),
+              error: (error, stackTrace) => const OstrackCard(
+                child: Text('Trending data is unavailable right now.'),
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -1717,10 +1784,12 @@ class PlayerDashboard extends StatefulWidget {
     super.key,
     required this.catalog,
     required this.selectedPlatform,
+    required this.initialTrack,
   });
 
   final OstrackCatalog catalog;
   final String selectedPlatform;
+  final ActiveTrackEntry initialTrack;
 
   @override
   State<PlayerDashboard> createState() => _PlayerDashboardState();
@@ -1734,7 +1803,7 @@ class _PlayerDashboardState extends State<PlayerDashboard> {
   @override
   void initState() {
     super.initState();
-    _activeTrack = widget.catalog.activeTrack;
+    _activeTrack = widget.initialTrack;
     _ambientAccent = OstrackColors.teal;
   }
 
