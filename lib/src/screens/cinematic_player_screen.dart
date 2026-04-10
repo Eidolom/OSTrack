@@ -9,6 +9,7 @@ import '../app_providers.dart';
 import '../ostrack_catalog.dart';
 import '../ostrack_theme.dart';
 import '../playback/palette_service.dart';
+import '../widgets/scene_tag_submission_modal.dart';
 
 /// Full-screen cinematic player with glassmorphism aesthetic.
 /// Detaches playback UI from Riverpod state to maintain 60fps during audio playback.
@@ -170,7 +171,7 @@ class CinematicPlayerScreen extends ConsumerWidget {
                   const SizedBox(height: 32),
 
                   // Contextual Scene Tag (OSTrack Differentiator)
-                  _buildSceneTimelineTag(track),
+                  _buildSceneTimelineTag(context, track),
 
                   const SizedBox(height: 16),
 
@@ -241,7 +242,7 @@ class CinematicPlayerScreen extends ConsumerWidget {
   }
 
   /// Scene timeline context tag (dynamic in Phase 2)
-  Widget _buildSceneTimelineTag(ActiveTrackEntry track) {
+  Widget _buildSceneTimelineTag(BuildContext context, ActiveTrackEntry track) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -267,6 +268,20 @@ class CinematicPlayerScreen extends ConsumerWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () {
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                useRootNavigator: true,
+                builder: (context) => SceneTagSubmissionModal(track: track),
+              );
+            },
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Add Tag'),
           ),
         ],
       ),

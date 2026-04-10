@@ -57,6 +57,14 @@ class MascotCabinetScreen extends ConsumerWidget {
                           color: OstrackColors.gold,
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          _showCabinetStore(context, ref, fullCatalog, ownedIds.toSet());
+                        },
+                        icon: const Icon(Icons.storefront_outlined, size: 18),
+                        label: const Text('Store'),
+                      ),
                     ],
                   ),
                 ),
@@ -142,6 +150,92 @@ class MascotCabinetScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showCabinetStore(
+    BuildContext context,
+    WidgetRef ref,
+    List<MascotEntry> catalog,
+    Set<String> ownedIds,
+  ) {
+    final lockedMascots = catalog.where((m) => !ownedIds.contains(m.id)).toList(growable: false);
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 0.75,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Mascot Store', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 6),
+                Text('Purchase to unlock instantly', style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: lockedMascots.isEmpty
+                      ? const Center(child: Text('All mascots unlocked.'))
+                      : ListView.separated(
+                          itemCount: lockedMascots.length,
+                          separatorBuilder: (_, index) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final mascot = lockedMascots[index];
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                              ),
+                              child: Row(
+                                children: [
+                                  MascotSpriteView(
+                                    mascotId: mascot.id,
+                                    color: mascot.assetColor,
+                                    size: 48,
+                                    frameCount: mascot.frameCount,
+                                    frameDurationMs: mascot.frameDurationMs,
+                                    isEquipped: false,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(mascot.name, style: Theme.of(context).textTheme.titleMedium),
+                                        const SizedBox(height: 2),
+                                        Text(mascot.tierLabel, style: Theme.of(context).textTheme.labelMedium),
+                                      ],
+                                    ),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () async {
+                                      await ref.read(mascotControllerProvider).purchaseMascot(mascot.id);
+                                      if (!context.mounted) {
+                                        return;
+                                      }
+                                      Navigator.of(context).pop();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Purchased ${mascot.name} for ${mascot.priceLabel}.')),
+                                      );
+                                    },
+                                    child: Text(mascot.priceLabel),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

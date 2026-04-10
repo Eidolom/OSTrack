@@ -1184,6 +1184,22 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
     _ForumEntry(author: '@yukirose', meta: 'Yesterday', body: 'Malenia phase 2 choir hit still gives me chills. Easy top-5 FromSoftware track.'),
   ];
 
+  final List<_SceneTimelineEntry> _sceneEntries = <_SceneTimelineEntry>[
+    const _SceneTimelineEntry(
+      title: 'Malenia reveal',
+      description: '"The choir bloom hits exactly as the cutscene breaks into phase two."',
+      status: 'Verified',
+      statusColor: OstrackColors.teal,
+      timestamp: '02:14',
+    ),
+    const _SceneTimelineEntry(
+      title: 'Roundtable Hold return',
+      description: '"Quiet motif after your first major shardbearer. Still waiting for precise timestamp."',
+      status: 'Bounty open',
+      statusColor: OstrackColors.coral,
+    ),
+  ];
+
   final Set<int> _expandedTrackNumbers = <int>{};
 
   Future<void> _launchTrack(String title) async {
@@ -1336,23 +1352,144 @@ class _MediaSourcePageState extends ConsumerState<MediaSourcePage> {
   }
 
   Widget _buildSceneTimeline() {
+    final timeline = List<_SceneTimelineEntry>.unmodifiable(_sceneEntries);
+
     return ListView(
-      children: const [
-        _SceneTimelineCard(
-          title: 'Malenia reveal',
-          description: '"The choir bloom hits exactly as the cutscene breaks into phase two."',
-          status: 'Verified',
-          statusColor: OstrackColors.teal,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed: _openSceneContributionSheet,
+            icon: const Icon(Icons.add_comment_outlined),
+            label: const Text('Contribute Tag'),
+          ),
         ),
-        SizedBox(height: 10),
-        _SceneTimelineCard(
-          title: 'Roundtable Hold return',
-          description: '"Quiet motif after your first major shardbearer. Still waiting for precise timestamp."',
-          status: 'Bounty open',
-          statusColor: OstrackColors.coral,
-        ),
+        const SizedBox(height: 10),
+        for (var i = 0; i < timeline.length; i++) ...[
+          _SceneTimelineCard(
+            title: timeline[i].title,
+            description: timeline[i].description,
+            status: timeline[i].status,
+            statusColor: timeline[i].statusColor,
+            timestamp: timeline[i].timestamp,
+          ),
+          if (i < timeline.length - 1) const SizedBox(height: 10),
+        ],
       ],
     );
+  }
+
+  Future<void> _openSceneContributionSheet() async {
+    final formKey = GlobalKey<FormState>();
+    final descriptionController = TextEditingController();
+    final timestampController = TextEditingController();
+    var fidelity = 'Description Only';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final requiresTimestamp = fidelity == 'Timestamp + Description';
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Submit Scene Tag', style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: fidelity,
+                      decoration: const InputDecoration(labelText: 'Fidelity Level'),
+                      items: const [
+                        DropdownMenuItem(value: 'Description Only', child: Text('Description only')),
+                        DropdownMenuItem(value: 'Timestamp + Description', child: Text('Timestamp + description')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setModalState(() {
+                            fidelity = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: descriptionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Text Description',
+                        hintText: 'Describe the scene/moment this track anchors.',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Description is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    if (requiresTimestamp) ...[
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: timestampController,
+                        decoration: const InputDecoration(
+                          labelText: 'Timestamp (optional)',
+                          hintText: 'e.g. 02:14',
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          if (!formKey.currentState!.validate()) {
+                            return;
+                          }
+
+                          setState(() {
+                            _sceneEntries.insert(
+                              0,
+                              _SceneTimelineEntry(
+                                title: 'Community submission',
+                                description: '"${descriptionController.text.trim()}"',
+                                status: requiresTimestamp ? 'Timestamp submitted' : 'Description submitted',
+                                statusColor: requiresTimestamp ? OstrackColors.teal : OstrackColors.gold,
+                                timestamp: timestampController.text.trim().isEmpty
+                                    ? null
+                                    : timestampController.text.trim(),
+                              ),
+                            );
+                          });
+
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            const SnackBar(content: Text('Scene timeline entry submitted.')),
+                          );
+                        },
+                        child: const Text('Submit Entry'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    descriptionController.dispose();
+    timestampController.dispose();
   }
 
   Widget _buildForum() {
@@ -1522,12 +1659,14 @@ class _SceneTimelineCard extends StatelessWidget {
     required this.description,
     required this.status,
     required this.statusColor,
+    this.timestamp,
   });
 
   final String title;
   final String description;
   final String status;
   final Color statusColor;
+  final String? timestamp;
 
   @override
   Widget build(BuildContext context) {
@@ -1546,10 +1685,33 @@ class _SceneTimelineCard extends StatelessWidget {
             description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic, height: 1.35),
           ),
+          if (timestamp != null && timestamp!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Timestamp: $timestamp',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: OstrackColors.teal),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+class _SceneTimelineEntry {
+  const _SceneTimelineEntry({
+    required this.title,
+    required this.description,
+    required this.status,
+    required this.statusColor,
+    this.timestamp,
+  });
+
+  final String title;
+  final String description;
+  final String status;
+  final Color statusColor;
+  final String? timestamp;
 }
 
 class _MediaTrackEntry {
