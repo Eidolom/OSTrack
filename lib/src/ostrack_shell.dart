@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'app_preferences.dart';
 import 'ostrack_catalog.dart';
 import 'mascot_monetization.dart';
+import 'mascot_sprite.dart';
 import 'settings/settings_screen.dart';
 import 'ostrack_theme.dart';
 import 'ostrack_widgets.dart';
@@ -46,14 +47,20 @@ class _OstrackShellState extends State<OstrackShell> {
           IndexedStack(
             index: _currentIndex,
             children: [
-              HomeDashboard(catalog: widget.catalog),
-              ExploreDashboard(catalog: widget.catalog, onOpenMediaSource: _openMediaSource),
-              LibraryDashboard(catalog: widget.catalog),
-              ProfileDashboard(
-                catalog: widget.catalog,
-                preferences: widget.preferences,
-                onPreferencesChanged: widget.onPreferencesChanged,
-                mascotCatalog: const OstrackMascotCatalog(),
+              TickerMode(enabled: _currentIndex == 0, child: HomeDashboard(catalog: widget.catalog)),
+              TickerMode(
+                enabled: _currentIndex == 1,
+                child: ExploreDashboard(catalog: widget.catalog, onOpenMediaSource: _openMediaSource),
+              ),
+              TickerMode(enabled: _currentIndex == 2, child: LibraryDashboard(catalog: widget.catalog)),
+              TickerMode(
+                enabled: _currentIndex == 3,
+                child: ProfileDashboard(
+                  catalog: widget.catalog,
+                  preferences: widget.preferences,
+                  onPreferencesChanged: widget.onPreferencesChanged,
+                  mascotCatalog: const OstrackMascotCatalog(),
+                ),
               ),
             ],
           ),
@@ -2161,7 +2168,7 @@ class ProfileDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = catalog.profile;
     final mascotView = mascotCatalog.viewFor(preferences);
-    final equippedMascotGlyph = mascotGlyphForId(mascotView.equippedEntry?.mascot.id ?? 'founding-archivist');
+    final equippedMascot = mascotView.equippedEntry?.mascot;
 
     return OstrackPageFrame(
       eyebrow: 'Profile',
@@ -2189,7 +2196,7 @@ class ProfileDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _CollectorHeroCard(profile: profile, mascotGlyph: equippedMascotGlyph),
+          _CollectorHeroCard(profile: profile, equippedMascot: equippedMascot),
           const SizedBox(height: 16),
           _CollectorStatsSheet(profile: profile),
           const SizedBox(height: 16),
@@ -2266,10 +2273,10 @@ class ProfileDashboard extends StatelessWidget {
 }
 
 class _CollectorHeroCard extends StatelessWidget {
-  const _CollectorHeroCard({required this.profile, required this.mascotGlyph});
+  const _CollectorHeroCard({required this.profile, required this.equippedMascot});
 
   final ProfileEntry profile;
-  final String mascotGlyph;
+  final MascotEntry? equippedMascot;
 
   @override
   Widget build(BuildContext context) {
@@ -2295,9 +2302,13 @@ class _CollectorHeroCard extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  mascotGlyph,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                child: MascotSpriteView(
+                  mascotId: equippedMascot?.id ?? 'founding-archivist',
+                  color: equippedMascot?.assetColor ?? OstrackColors.gold,
+                  size: 48,
+                  frameCount: equippedMascot?.frameCount ?? 3,
+                  frameDurationMs: equippedMascot?.frameDurationMs ?? 240,
+                  isEquipped: true,
                 ),
               ),
               const SizedBox(width: 14),

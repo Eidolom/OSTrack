@@ -59,6 +59,7 @@
 - 2026-04-09 — UI/UX Step 9 interaction pass completed: added player ambient color transitions when switching related tracks and implemented a tactile half-star rating widget with staggered fill, haptic pulses, and a brief completion burst.
 - 2026-04-09 — UI/UX Step 9 polish follow-up: removed deprecated `withOpacity` usages across onboarding and shell UI surfaces; analyzer now reports zero issues.
 - 2026-04-10 — Implemented the mascot monetization foundation: added persisted mascot ownership/equip state, a public Profile collection cabinet, and a mascot store with house, partnership, community, and founding catalog entries, purchase/equip actions, and settings/profile entry points.
+- 2026-04-10 — Mascot monetization polish: replaced emoji placeholders with an animated sprite-style mascot renderer, gated background tickers for stable testing, and made the cabinet tier filters interactive.
 
 > This roadmap is organized into phases, not fixed calendar quarters. Each phase has clear **entry criteria** (what must be true before it starts) and **exit criteria** (what must be true before the next phase begins). Timelines are estimates assuming a small founding team of 3–5 engineers + 1 designer.
 

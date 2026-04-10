@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_preferences.dart';
+import 'mascot_sprite.dart';
 import 'ostrack_theme.dart';
 import 'ostrack_widgets.dart';
 
@@ -153,7 +154,7 @@ class MascotCatalogView {
   MascotCatalogEntry? get equippedEntry => entryFor(equippedMascotId);
 }
 
-class MascotCabinetSection extends StatelessWidget {
+class MascotCabinetSection extends StatefulWidget {
   const MascotCabinetSection({
     super.key,
     required this.catalog,
@@ -166,9 +167,23 @@ class MascotCabinetSection extends StatelessWidget {
   final VoidCallback onOpenStore;
 
   @override
+  State<MascotCabinetSection> createState() => _MascotCabinetSectionState();
+}
+
+class _MascotCabinetSectionState extends State<MascotCabinetSection> {
+  String _selectedFilter = 'ALL';
+
+  @override
   Widget build(BuildContext context) {
-    final ownedEntries = catalog.entries.where((entry) => entry.owned != null).toList(growable: false);
+    final allEntries = widget.catalog.entries;
+    final ownedEntries = allEntries.where((entry) => entry.owned != null).toList(growable: false);
     final unlockedCount = ownedEntries.length;
+    final visibleEntries = allEntries.where((entry) {
+      if (_selectedFilter == 'ALL') {
+        return true;
+      }
+      return entry.mascot.tierLabel == _selectedFilter;
+    }).toList(growable: false);
 
     return OstrackCard(
       child: Column(
@@ -187,7 +202,7 @@ class MascotCabinetSection extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: onOpenStore,
+                onPressed: widget.onOpenStore,
                 icon: const Icon(Icons.storefront_outlined),
                 tooltip: 'Open store',
               ),
@@ -197,11 +212,12 @@ class MascotCabinetSection extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: const [
-              _MascotFilterPill(label: 'ALL', isActive: true),
-              _MascotFilterPill(label: 'HOUSE'),
-              _MascotFilterPill(label: 'PARTNERSHIP'),
-              _MascotFilterPill(label: 'COMMUNITY'),
+            children: [
+              _MascotFilterPill(label: 'ALL', isActive: _selectedFilter == 'ALL', onTap: () => setState(() => _selectedFilter = 'ALL')),
+              _MascotFilterPill(label: 'HOUSE', isActive: _selectedFilter == 'HOUSE', onTap: () => setState(() => _selectedFilter = 'HOUSE')),
+              _MascotFilterPill(label: 'PARTNERSHIP', isActive: _selectedFilter == 'PARTNERSHIP', onTap: () => setState(() => _selectedFilter = 'PARTNERSHIP')),
+              _MascotFilterPill(label: 'COMMUNITY', isActive: _selectedFilter == 'COMMUNITY', onTap: () => setState(() => _selectedFilter = 'COMMUNITY')),
+              _MascotFilterPill(label: 'FOUNDING', isActive: _selectedFilter == 'FOUNDING', onTap: () => setState(() => _selectedFilter = 'FOUNDING')),
             ],
           ),
           const SizedBox(height: 16),
@@ -212,13 +228,13 @@ class MascotCabinetSection extends StatelessWidget {
               return Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: catalog.entries
+                children: visibleEntries
                     .map(
                       (entry) => SizedBox(
                         width: tileWidth,
                         child: _MascotCaseTile(
                           entry: entry,
-                          onEquipMascot: () => onEquipMascot(entry.mascot.id),
+                          onEquipMascot: () => widget.onEquipMascot(entry.mascot.id),
                         ),
                       ),
                     )
@@ -415,7 +431,18 @@ class _MascotStoreCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MascotArtwork(size: 88, color: mascot.assetColor, glyph: _glyphFor(mascot.id)),
+              _MascotArtwork(
+                size: 88,
+                color: mascot.assetColor,
+                sprite: MascotSpriteView(
+                  mascotId: mascot.id,
+                  color: mascot.assetColor,
+                  size: 88,
+                  frameCount: mascot.frameCount,
+                  frameDurationMs: mascot.frameDurationMs,
+                  isEquipped: entry.equipped,
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -470,9 +497,6 @@ class _MascotStoreCard extends StatelessWidget {
     );
   }
 
-  String _glyphFor(String mascotId) {
-    return mascotGlyphForId(mascotId);
-  }
 }
 
 class _MascotCaseTile extends StatelessWidget {
@@ -503,9 +527,13 @@ class _MascotCaseTile extends StatelessWidget {
               AspectRatio(
                 aspectRatio: 1,
                 child: Center(
-                  child: Text(
-                    _glyphFor(mascot.id),
-                    style: const TextStyle(fontSize: 32),
+                  child: MascotSpriteView(
+                    mascotId: mascot.id,
+                    color: mascot.assetColor,
+                    size: 36,
+                    frameCount: mascot.frameCount,
+                    frameDurationMs: mascot.frameDurationMs,
+                    isEquipped: entry.equipped,
                   ),
                 ),
               ),
@@ -537,17 +565,14 @@ class _MascotCaseTile extends StatelessWidget {
     );
   }
 
-  String _glyphFor(String mascotId) {
-    return mascotGlyphForId(mascotId);
-  }
 }
 
 class _MascotArtwork extends StatelessWidget {
-  const _MascotArtwork({required this.size, required this.color, required this.glyph});
+  const _MascotArtwork({required this.size, required this.color, required this.sprite});
 
   final double size;
   final Color color;
-  final String glyph;
+  final Widget sprite;
 
   @override
   Widget build(BuildContext context) {
@@ -560,7 +585,7 @@ class _MascotArtwork extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       alignment: Alignment.center,
-      child: Text(glyph, style: const TextStyle(fontSize: 42)),
+      child: sprite,
     );
   }
 }
@@ -586,21 +611,26 @@ class _StoreBadge extends StatelessWidget {
 }
 
 class _MascotFilterPill extends StatelessWidget {
-  const _MascotFilterPill({required this.label, this.isActive = false});
+  const _MascotFilterPill({required this.label, this.isActive = false, required this.onTap});
 
   final String label;
   final bool isActive;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? OstrackColors.gold.withValues(alpha: 0.18) : OstrackColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: isActive ? OstrackColors.gold.withValues(alpha: 0.55) : Colors.white.withValues(alpha: 0.08)),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? OstrackColors.gold.withValues(alpha: 0.18) : OstrackColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: isActive ? OstrackColors.gold.withValues(alpha: 0.55) : Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Text(label, style: Theme.of(context).textTheme.labelLarge),
       ),
-      child: Text(label, style: Theme.of(context).textTheme.labelLarge),
     );
   }
 }
