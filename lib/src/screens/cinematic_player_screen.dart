@@ -8,6 +8,7 @@ import 'package:just_audio/just_audio.dart';
 import '../app_providers.dart';
 import '../ostrack_catalog.dart';
 import '../ostrack_theme.dart';
+import '../playback/palette_service.dart';
 
 /// Full-screen cinematic player with glassmorphism aesthetic.
 /// Detaches playback UI from Riverpod state to maintain 60fps during audio playback.
@@ -28,6 +29,15 @@ class CinematicPlayerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Use provided track or watch from provider (optional for flexibility)
     final track = activeTrack ?? ref.watch(activeTrackProvider).valueOrNull;
+    
+    // Watch the palette provider for dynamic colors from album artwork
+    final paletteAsync = ref.watch(trackPaletteProvider);
+    
+    // Extract the vibrant color (or default to OSTrack Gold while loading)
+    final accentColor = paletteAsync.maybeWhen(
+      data: (palette) => palette.vibrant,
+      orElse: () => OstrackColors.gold,
+    );
 
     if (track == null) {
       return Scaffold(
@@ -61,17 +71,18 @@ class CinematicPlayerScreen extends ConsumerWidget {
             ),
           ),
 
-          // 2. GLASSMORPHISM: Blur + Gradient Overlay
+          // 2. GLASSMORPHISM: Blur + Animated Gradient Overlay with dynamic color
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 45.0, sigmaY: 45.0),
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 500),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.3),
-                    Colors.black.withValues(alpha: 0.8), // Darker at bottom
+                    accentColor.withValues(alpha: 0.2), // Subtle tint at top
+                    Colors.black.withValues(alpha: 0.8), // Deep black at bottom
                   ],
                 ),
               ),
@@ -169,7 +180,7 @@ class CinematicPlayerScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Playback Controls (also stream-driven)
-                  _buildControls(ref),
+                  _buildControls(ref, accentColor),
 
                   const SizedBox(height: 48),
                 ],
@@ -294,7 +305,7 @@ class CinematicPlayerScreen extends ConsumerWidget {
 
   /// Playback controls: play/pause button and skip buttons.
   /// Also uses StreamBuilder to stay in sync with audio engine.
-  Widget _buildControls(WidgetRef ref) {
+  Widget _buildControls(WidgetRef ref, Color accentColor) {
     final audioPlayer = ref.read(originalAudioServiceProvider).player;
 
     return StreamBuilder<PlayerState>(
@@ -302,7 +313,6 @@ class CinematicPlayerScreen extends ConsumerWidget {
       builder: (context, snapshot) {
         final playerState = snapshot.data;
         final processingState = playerState?.processingState;
-        final playing = playerState?.playing ?? false;
 
         // Show loading spinner if buffering
         if (processingState == ProcessingState.loading ||
@@ -324,25 +334,41 @@ class CinematicPlayerScreen extends ConsumerWidget {
               },
             ),
 
-            // Main Play/Pause Button
+            // Main Play/Pause Button with dynamic accent color
             GestureDetector(
               onTap: () async {
+                final audioPlayer = ref.read(originalAudioServiceProvider).player;
+                final playing = (await audioPlayer.playerStateStream.first).playing;
                 if (playing) {
                   await audioPlayer.pause();
                 } else {
                   await audioPlayer.play();
                 }
               },
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
                 padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: OstrackColors.gold,
+                  color: accentColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    )
+                  ],
                 ),
-                child: Icon(
-                  playing ? Icons.pause : Icons.play_arrow,
-                  color: OstrackColors.background,
-                  size: 48,
+                child: StreamBuilder<PlayerState>(
+                  stream: ref.read(originalAudioServiceProvider).player.playerStateStream,
+                  builder: (context, snapshot) {
+                    final playing = snapshot.data?.playing ?? false;
+                    return Icon(
+                      playing ? Icons.pause : Icons.play_arrow,
+                      color: Colors.black87,
+                      size: 48,
+                    );
+                  },
                 ),
               ),
             ),

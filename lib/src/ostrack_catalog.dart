@@ -84,6 +84,7 @@ class ActiveTrackEntry {
     required this.source,
     required this.description,
     required this.sceneTag,
+    this.albumArtUrl = '',
   });
 
   final String title;
@@ -91,6 +92,7 @@ class ActiveTrackEntry {
   final String source;
   final String description;
   final String sceneTag;
+  final String albumArtUrl;
 }
 
 class ProfileEntry {
