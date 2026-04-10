@@ -254,7 +254,7 @@ class SupabaseShelfRepository implements ShelfRepository {
     if (_client == null) return const [];
 
     try {
-      final response = await _client!.from('shelves').select('*').limit(100);
+      final response = await _client.from('shelves').select('*').limit(100);
 
       final shelves = (response as List<dynamic>)
           .map((row) {
@@ -293,7 +293,7 @@ class SupabaseShelfRepository implements ShelfRepository {
     if (_client == null) return const [];
 
     try {
-      final response = await _client!
+        final response = await _client
           .from('shelf_tracks')
           .select('*, tracks(title, composer_name, source_title)')
           .eq('shelf_id', shelfId)
