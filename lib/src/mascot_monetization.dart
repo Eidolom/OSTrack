@@ -9,21 +9,6 @@ enum MascotTier { house, partnership, community, founding }
 
 enum MascotOwnershipSource { purchased, foundingGrant }
 
-String mascotGlyphForId(String mascotId) {
-  return switch (mascotId) {
-    'conductor-skeleton' => '💀',
-    'kitsune-archivist' => '🦊',
-    'cassette-ghost' => '👻',
-    'chibi-beethoven' => '🎵',
-    'shrine-maiden' => '⛩',
-    'pixel-composer' => '✎',
-    'annoying-dog' => '🐶',
-    'founding-archivist' => '✦',
-    'community-echo' => '〰',
-    _ => '□',
-  };
-}
-
 class MascotEntry {
   const MascotEntry({
     required this.id,
@@ -134,6 +119,7 @@ class MascotCatalogView {
                       ? MascotOwnershipSource.foundingGrant
                       : MascotOwnershipSource.purchased,
                   purchasedAtLabel: mascot.tier == MascotTier.founding ? 'Founding grant' : 'Purchased today',
+                  // TODO: Replace this seeded value with the purchase record's edition number once ownership persistence is backed by a real purchase ledger.
                   editionNumber: mascot.editionCap == null ? null : 47,
                 )
               : null,
@@ -160,11 +146,13 @@ class MascotCabinetSection extends StatefulWidget {
     required this.catalog,
     required this.onEquipMascot,
     required this.onOpenStore,
+    required this.onOpenStoreForMascot,
   });
 
   final MascotCatalogView catalog;
   final Future<void> Function(String mascotId) onEquipMascot;
   final VoidCallback onOpenStore;
+  final void Function(String mascotId) onOpenStoreForMascot;
 
   @override
   State<MascotCabinetSection> createState() => _MascotCabinetSectionState();
@@ -235,6 +223,7 @@ class _MascotCabinetSectionState extends State<MascotCabinetSection> {
                         child: _MascotCaseTile(
                           entry: entry,
                           onEquipMascot: () => widget.onEquipMascot(entry.mascot.id),
+                          onOpenStoreForMascot: () => widget.onOpenStoreForMascot(entry.mascot.id),
                         ),
                       ),
                     )
@@ -254,11 +243,13 @@ class MascotStorePage extends StatefulWidget {
     required this.catalog,
     required this.preferences,
     required this.onPreferencesChanged,
+    this.initialHighlightedMascotId,
   });
 
   final MascotCatalogView catalog;
   final AppPreferences preferences;
   final PreferencesUpdater onPreferencesChanged;
+  final String? initialHighlightedMascotId;
 
   @override
   State<MascotStorePage> createState() => _MascotStorePageState();
@@ -267,11 +258,30 @@ class MascotStorePage extends StatefulWidget {
 class _MascotStorePageState extends State<MascotStorePage> {
   String _selectedTier = 'ALL';
   late AppPreferences _localPreferences;
+  String? _highlightedMascotId;
 
   @override
   void initState() {
     super.initState();
     _localPreferences = widget.preferences;
+    _highlightedMascotId = widget.initialHighlightedMascotId;
+
+    if (_highlightedMascotId != null) {
+      final target = widget.catalog.entryFor(_highlightedMascotId!);
+      if (target != null) {
+        _selectedTier = target.mascot.tierLabel;
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant MascotStorePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.preferences != widget.preferences) {
+      setState(() {
+        _localPreferences = widget.preferences;
+      });
+    }
   }
 
   @override
@@ -327,6 +337,7 @@ class _MascotStorePageState extends State<MascotStorePage> {
                   for (var i = 0; i < entries.length; i++) ...[
                     _MascotStoreCard(
                       entry: entries[i],
+                      isHighlighted: entries[i].mascot.id == _highlightedMascotId,
                       onPurchase: () async {
                         final messenger = ScaffoldMessenger.of(context);
                         final owned = _localPreferences.ownedMascotIds.toSet();
@@ -387,6 +398,22 @@ class _FeaturedMascotDrop extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: _MascotArtwork(
+              size: 118,
+              color: mascot.assetColor,
+              sprite: MascotSpriteView(
+                mascotId: mascot.id,
+                color: mascot.assetColor,
+                size: 108,
+                frameCount: mascot.frameCount,
+                frameDurationMs: mascot.frameDurationMs,
+                isEquipped: true,
+                animated: true,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
               const _StoreBadge(label: 'FEATURED'),
@@ -411,11 +438,13 @@ class _FeaturedMascotDrop extends StatelessWidget {
 class _MascotStoreCard extends StatelessWidget {
   const _MascotStoreCard({
     required this.entry,
+    required this.isHighlighted,
     required this.onPurchase,
     required this.onEquip,
   });
 
   final MascotCatalogEntry entry;
+  final bool isHighlighted;
   final VoidCallback onPurchase;
   final VoidCallback onEquip;
 
@@ -423,8 +452,23 @@ class _MascotStoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final mascot = entry.mascot;
     final owned = entry.owned != null;
+    final equipped = entry.equipped;
+    final buttonLabel = !owned ? 'Add to Collection' : equipped ? 'Equipped ✓' : 'Equip';
+    final buttonIcon = !owned ? Icons.shopping_bag_outlined : equipped ? Icons.check_circle_outline : Icons.vibration;
+    final buttonAction = !owned ? onPurchase : equipped ? null : onEquip;
 
     return OstrackCard(
+      radius: isHighlighted ? 18 : 16,
+      gradient: isHighlighted
+          ? LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                mascot.assetColor.withValues(alpha: 0.2),
+                OstrackColors.surface,
+              ],
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -479,16 +523,10 @@ class _MascotStoreCard extends StatelessWidget {
             children: [
               Text(mascot.priceLabel, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: OstrackColors.gold)),
               const Spacer(),
-              TextButton.icon(
-                onPressed: onPurchase,
-                icon: const Icon(Icons.shopping_bag_outlined),
-                label: Text(owned ? 'Owned' : 'Add to Collection'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: owned ? onEquip : null,
-                icon: const Icon(Icons.vibration),
-                label: const Text('Equip'),
+              FilledButton.icon(
+                onPressed: buttonAction,
+                icon: Icon(buttonIcon),
+                label: Text(buttonLabel),
               ),
             ],
           ),
@@ -500,10 +538,15 @@ class _MascotStoreCard extends StatelessWidget {
 }
 
 class _MascotCaseTile extends StatelessWidget {
-  const _MascotCaseTile({required this.entry, required this.onEquipMascot});
+  const _MascotCaseTile({
+    required this.entry,
+    required this.onEquipMascot,
+    required this.onOpenStoreForMascot,
+  });
 
   final MascotCatalogEntry entry;
   final VoidCallback onEquipMascot;
+  final VoidCallback onOpenStoreForMascot;
 
   @override
   Widget build(BuildContext context) {
@@ -513,7 +556,7 @@ class _MascotCaseTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: owned ? onEquipMascot : null,
+        onTap: owned ? onEquipMascot : onOpenStoreForMascot,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(10),
@@ -534,6 +577,7 @@ class _MascotCaseTile extends StatelessWidget {
                     frameCount: mascot.frameCount,
                     frameDurationMs: mascot.frameDurationMs,
                     isEquipped: entry.equipped,
+                    animated: entry.equipped,
                   ),
                 ),
               ),

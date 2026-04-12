@@ -304,6 +304,7 @@ class _MascotGridItem extends StatelessWidget {
                       frameCount: mascot.frameCount,
                       frameDurationMs: mascot.frameDurationMs,
                       isEquipped: isEquipped,
+                      animated: isEquipped,
                     ),
                   ),
                 ),

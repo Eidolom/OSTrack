@@ -2509,6 +2509,18 @@ class ProfileDashboard extends StatelessWidget {
                 ),
               );
             },
+            onOpenStoreForMascot: (mascotId) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => MascotStorePage(
+                    catalog: mascotCatalog.viewFor(preferences),
+                    preferences: preferences,
+                    onPreferencesChanged: onPreferencesChanged,
+                    initialHighlightedMascotId: mascotId,
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 24),
           const SectionHeader(

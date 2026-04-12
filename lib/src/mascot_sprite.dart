@@ -9,6 +9,7 @@ class MascotSpriteView extends StatefulWidget {
     this.frameCount = 4,
     this.frameDurationMs = 260,
     this.isEquipped = false,
+    this.animated = false,
   });
 
   final String mascotId;
@@ -17,6 +18,7 @@ class MascotSpriteView extends StatefulWidget {
   final int frameCount;
   final int frameDurationMs;
   final bool isEquipped;
+  final bool animated;
 
   @override
   State<MascotSpriteView> createState() => _MascotSpriteViewState();
@@ -31,17 +33,35 @@ class _MascotSpriteViewState extends State<MascotSpriteView> with SingleTickerPr
     _controller = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: widget.frameDurationMs * widget.frameCount),
-    )..repeat();
+    );
+    _syncAnimationState();
   }
 
   @override
   void didUpdateWidget(covariant MascotSpriteView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.frameCount != widget.frameCount || oldWidget.frameDurationMs != widget.frameDurationMs) {
-      _controller
-        ..duration = Duration(milliseconds: widget.frameDurationMs * widget.frameCount)
-        ..repeat();
+      _controller.duration = Duration(milliseconds: widget.frameDurationMs * widget.frameCount);
     }
+    if (oldWidget.animated != widget.animated ||
+        oldWidget.frameCount != widget.frameCount ||
+        oldWidget.frameDurationMs != widget.frameDurationMs) {
+      _syncAnimationState();
+    }
+  }
+
+  void _syncAnimationState() {
+    if (widget.animated) {
+      if (!_controller.isAnimating) {
+        _controller.repeat();
+      }
+      return;
+    }
+
+    if (_controller.isAnimating) {
+      _controller.stop();
+    }
+    _controller.value = 0;
   }
 
   @override
@@ -133,6 +153,7 @@ class _MascotSpritePainter extends CustomPainter {
 
   void _drawSkeleton(Canvas canvas, Size size, Paint paint, Paint accentPaint, int frameIndex, bool isEquipped) {
     final bounce = frameIndex.isEven ? 0.0 : 2.0;
+    canvas.save();
     canvas.translate(0, bounce);
     canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.25), size.width * 0.14, paint);
     canvas.drawCircle(Offset(size.width * 0.42, size.height * 0.24), size.width * 0.03, accentPaint);
@@ -145,6 +166,7 @@ class _MascotSpritePainter extends CustomPainter {
     if (isEquipped) {
       canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.22), size.width * 0.06, Paint()..color = Colors.white.withValues(alpha: 0.28));
     }
+    canvas.restore();
   }
 
   void _drawKitsune(Canvas canvas, Size size, Paint paint, Paint accentPaint, int frameIndex, bool isEquipped) {
